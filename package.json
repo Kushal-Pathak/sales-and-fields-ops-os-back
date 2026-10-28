@@ -14,10 +14,15 @@
   "type": "commonjs",
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "supabase": "^2.122.0",
     "typescript": "^7.0.2",
     "wrangler": "^4.153.0"
   },
   "dependencies": {
-    "hono": "^4.13.14"
+    "@supabase/middleware": "^1.0.0",
+    "@supabase/server": "^1.9.2",
+    "@supabase/supabase-js": "^2.118.0",
+    "hono": "^4.13.14",
+    "zod": "^4.6.7"
   }
 }
