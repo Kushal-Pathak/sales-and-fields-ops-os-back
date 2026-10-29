@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "typecheck": "tsc --noEmit",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "db:types": "supabase gen types --lang typescript --linked --schema public > src/types/database.ts"
   },
   "keywords": [],
   "author": "",

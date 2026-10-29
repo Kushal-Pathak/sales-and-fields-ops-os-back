@@ -7,6 +7,7 @@ import { requestId } from "./middleware/request-id";
 import { requestLogger } from "./middleware/request-logger";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
+import { requireEnv } from "./middleware/validate-env";
 
 const app = new Hono<AppEnv>();
 
@@ -14,6 +15,8 @@ app.use("*", requestId);
 app.use("*", requestLogger);
 
 app.use("*", secureHeaders());
+
+app.use("*", requireEnv);
 
 app.use(
   "/api/*",

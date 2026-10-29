@@ -1,11 +1,11 @@
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { Env } from "../config/env";
+import { AppSupabaseClient } from "./supabase";
 
 export type AppEnv = {
   Bindings: Env;
   Variables: {
     userId: string;
-    supabase: SupabaseClient;
+    supabase: AppSupabaseClient;
     requestId: string;
   };
 };

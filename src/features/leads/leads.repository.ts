@@ -1,15 +1,15 @@
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { CreateLeadInput, UpdateLeadInput } from "./lead.schema";
+import type { AppSupabaseClient } from "../../types/supabase";
 
-export async function getLeads(supabase: SupabaseClient) {
+export async function getLeads(supabase: AppSupabaseClient) {
   return supabase.from("leads").select("*");
 }
 
-export async function getLeadById(supabase: SupabaseClient, leadId: string) {
+export async function getLeadById(supabase: AppSupabaseClient, leadId: string) {
   return supabase.from("leads").select("*").eq("id", leadId).single();
 }
 
-export async function getUserOrganization(supabase: SupabaseClient) {
+export async function getUserOrganization(supabase: AppSupabaseClient) {
   return supabase
     .from("organization_members")
     .select("organization_id")
@@ -18,7 +18,7 @@ export async function getUserOrganization(supabase: SupabaseClient) {
 }
 
 export async function createLead(
-  supabase: SupabaseClient,
+  supabase: AppSupabaseClient,
   organizationId: string,
   input: CreateLeadInput,
 ) {
@@ -30,7 +30,7 @@ export async function createLead(
 }
 
 export async function updateLead(
-  supabase: SupabaseClient,
+  supabase: AppSupabaseClient,
   leadId: string,
   input: UpdateLeadInput,
 ) {
@@ -42,6 +42,6 @@ export async function updateLead(
     .single();
 }
 
-export async function deleteLead(supabase: SupabaseClient, leadId: string) {
+export async function deleteLead(supabase: AppSupabaseClient, leadId: string) {
   return supabase.from("leads").delete().eq("id", leadId).select().single();
 }

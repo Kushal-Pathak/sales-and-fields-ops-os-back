@@ -1,4 +1,3 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   createLead,
   getLeadById,
@@ -10,8 +9,9 @@ import {
 import type { CreateLeadInput } from "./lead.schema";
 import type { UpdateLeadInput } from "./lead.schema";
 import { AppError } from "../../core/errors/app-error";
+import type { AppSupabaseClient } from "../../types/supabase";
 
-export async function listLeads(supabase: SupabaseClient) {
+export async function listLeads(supabase: AppSupabaseClient) {
   const { data, error } = await getLeads(supabase);
 
   if (error || !data) {
@@ -25,7 +25,7 @@ export async function listLeads(supabase: SupabaseClient) {
   return data;
 }
 
-export async function findLeadById(supabase: SupabaseClient, leadId: string) {
+export async function findLeadById(supabase: AppSupabaseClient, leadId: string) {
   const { data, error } = await getLeadById(supabase, leadId);
 
   if (error || !data) {
@@ -36,7 +36,7 @@ export async function findLeadById(supabase: SupabaseClient, leadId: string) {
 }
 
 export async function addLead(
-  supabase: SupabaseClient,
+  supabase: AppSupabaseClient,
   input: CreateLeadInput,
 ) {
   const { data: membership, error: membershipError } =
@@ -64,7 +64,7 @@ export async function addLead(
 }
 
 export async function editLead(
-  supabase: SupabaseClient,
+  supabase: AppSupabaseClient,
   leadId: string,
   input: UpdateLeadInput,
 ) {
@@ -81,7 +81,7 @@ export async function editLead(
   return data;
 }
 
-export async function removeLead(supabase: SupabaseClient, leadId: string) {
+export async function removeLead(supabase: AppSupabaseClient, leadId: string) {
   const { data, error } = await deleteLead(supabase, leadId);
 
   if (error || !data) {
