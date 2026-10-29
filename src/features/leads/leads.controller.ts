@@ -8,15 +8,12 @@ import {
   removeLead,
 } from "./leads.service";
 import { createLeadSchema, updateLeadSchema } from "./lead.schema";
+import { validate } from "../../shared/validation/validate";
 
 export async function listLeadsController(c: Context<AppEnv>) {
   const supabase = c.get("supabase");
 
-  const { data, error } = await listLeads(supabase);
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
+  const data = await listLeads(supabase);
 
   return c.json({ data });
 }
@@ -30,11 +27,7 @@ export async function getLeadController(c: Context<AppEnv>) {
 
   const supabase = c.get("supabase");
 
-  const { data, error } = await findLeadById(supabase, leadId);
-
-  if (error || !data) {
-    return c.json({ error: "Lead not found!" }, 404);
-  }
+  const data = await findLeadById(supabase, leadId);
 
   return c.json({ data });
 }
@@ -42,22 +35,11 @@ export async function getLeadController(c: Context<AppEnv>) {
 export async function createLeadController(c: Context<AppEnv>) {
   const body = await c.req.json();
 
-  const result = createLeadSchema.safeParse(body);
-
-  if (!result.success) {
-    return c.json(
-      { error: "Invalid request data!", issues: result.error.issues },
-      400,
-    );
-  }
+  const input = validate(createLeadSchema, body);
 
   const supabase = c.get("supabase");
 
-  const { data, error } = await addLead(supabase, result.data);
-
-  if (error) {
-    return c.json({ error: error.message }, 400);
-  }
+  const data = await addLead(supabase, input);
 
   return c.json({ data }, 201);
 }
@@ -71,22 +53,11 @@ export async function updateLeadController(c: Context<AppEnv>) {
 
   const body = await c.req.json();
 
-  const result = updateLeadSchema.safeParse(body);
-
-  if (!result.success) {
-    return c.json(
-      { error: "Invalid request data", issues: result.error.issues },
-      400,
-    );
-  }
+  const input = validate(updateLeadSchema, body);
 
   const supabase = c.get("supabase");
 
-  const { data, error } = await editLead(supabase, leadId, result.data);
-
-  if (error || !data) {
-    return c.json({ error: "Lead not found or update failed!" }, 404);
-  }
+  const data = await editLead(supabase, leadId, input);
 
   return c.json({ data });
 }
@@ -100,11 +71,7 @@ export async function deleteLeadController(c: Context<AppEnv>) {
 
   const supabase = c.get("supabase");
 
-  const { data, error } = await removeLead(supabase, leadId);
-
-  if (error || !data) {
-    return c.json({ error: "Lead not found or deletion failed!" }, 404);
-  }
+  const data = await removeLead(supabase, leadId);
 
   return c.json({ data });
 }

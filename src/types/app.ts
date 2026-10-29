@@ -6,5 +6,6 @@ export type AppEnv = {
   Variables: {
     userId: string;
     supabase: SupabaseClient;
+    requestId: string;
   };
 };
