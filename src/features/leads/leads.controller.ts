@@ -9,13 +9,19 @@ import {
 } from "./leads.service";
 import { createLeadSchema, updateLeadSchema } from "./lead.schema";
 import { validate } from "../../shared/validation/validate";
+import { listLeadsQuerySchema } from "./lead.schema";
 
 export async function listLeadsController(c: Context<AppEnv>) {
+  const query = validate(listLeadsQuerySchema, c.req.query());
+
   const supabase = c.get("supabase");
 
-  const data = await listLeads(supabase);
+  const result = await listLeads(supabase, query);
 
-  return c.json({ data });
+  return c.json({
+    data: result.data,
+    pagination: { page: query.page, limit: query.limit, total: result.count },
+  });
 }
 
 export async function getLeadController(c: Context<AppEnv>) {

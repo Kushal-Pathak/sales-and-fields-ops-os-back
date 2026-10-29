@@ -10,22 +10,25 @@ import type { CreateLeadInput } from "./lead.schema";
 import type { UpdateLeadInput } from "./lead.schema";
 import { AppError } from "../../core/errors/app-error";
 import type { AppSupabaseClient } from "../../types/supabase";
+import { ListLeadsQuery } from "./lead.schema";
 
-export async function listLeads(supabase: AppSupabaseClient) {
-  const { data, error } = await getLeads(supabase);
+export async function listLeads(
+  supabase: AppSupabaseClient,
+  query: ListLeadsQuery,
+) {
+  const { data, count, error } = await getLeads(supabase, query);
 
   if (error || !data) {
-    throw new AppError(
-      "LEADS_FETCH_FAILED",
-      500,
-      "Failed to fetch leads!",
-    );
+    throw new AppError("LEADS_FETCH_FAILED", 500, "Failed to fetch leads!");
   }
 
-  return data;
+  return { data, count };
 }
 
-export async function findLeadById(supabase: AppSupabaseClient, leadId: string) {
+export async function findLeadById(
+  supabase: AppSupabaseClient,
+  leadId: string,
+) {
   const { data, error } = await getLeadById(supabase, leadId);
 
   if (error || !data) {
