@@ -17,6 +17,14 @@ export async function getLeads(
     countQuery = countQuery.eq("status", query.status);
   }
 
+  if (query.search) {
+    const pattern = `%${query.search}%`;
+
+    countQuery = countQuery.or(
+      `first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`,
+    );
+  }
+
   const { count, error: countError } = await countQuery;
 
   if (countError) {
@@ -35,6 +43,14 @@ export async function getLeads(
 
   if (query.status) {
     dataQuery = dataQuery.eq("status", query.status);
+  }
+
+  if (query.search) {
+    const pattern = `%${query.search}%`;
+
+    dataQuery = dataQuery.or(
+      `first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`,
+    );
   }
 
   const { data, error } = await dataQuery.range(from, to);
