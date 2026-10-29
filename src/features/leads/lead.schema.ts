@@ -1,5 +1,13 @@
 import z from "zod";
 
+export const leadStatusSchema = z.enum([
+  "new",
+  "contacted",
+  "qualified",
+  "converted",
+  "lost",
+]);
+
 export const createLeadSchema = z.object({
   first_name: z.string().trim().min(1),
   last_name: z.string().trim().min(1),
@@ -9,14 +17,16 @@ export const createLeadSchema = z.object({
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;
 
-export const updateLeadSchema = createLeadSchema.partial();
+export const updateLeadSchema = createLeadSchema.partial().extend({
+  status: leadStatusSchema.optional(),
+});
 
 export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;
 
 export const listLeadsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  status: z.string().trim().optional(),
+  status: leadStatusSchema.optional(),
   search: z.string().trim().min(1).optional(),
   sortBy: z
     .enum(["created_at", "updated_at", "first_name"])
