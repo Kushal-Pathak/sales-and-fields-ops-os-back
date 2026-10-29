@@ -53,6 +53,10 @@ export async function getLeads(
     );
   }
 
+  dataQuery = dataQuery.order(query.sortBy, {
+    ascending: query.sortOrder === "asc",
+  });
+
   const { data, error } = await dataQuery.range(from, to);
 
   return { data, count, error };

@@ -18,6 +18,10 @@ export const listLeadsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   status: z.string().trim().optional(),
   search: z.string().trim().min(1).optional(),
+  sortBy: z
+    .enum(["created_at", "updated_at", "first_name"])
+    .default("created_at"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
 export type ListLeadsQuery = z.infer<typeof listLeadsQuerySchema>;
