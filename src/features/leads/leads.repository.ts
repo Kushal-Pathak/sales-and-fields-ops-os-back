@@ -9,9 +9,15 @@ export async function getLeads(
   const from = (query.page - 1) * query.limit;
   const to = from + query.limit - 1;
 
-  const { count, error: countError } = await supabase
+  let countQuery = supabase
     .from("leads")
     .select("*", { count: "exact", head: true });
+
+  if (query.status) {
+    countQuery = countQuery.eq("status", query.status);
+  }
+
+  const { count, error: countError } = await countQuery;
 
   if (countError) {
     return { data: null, count: null, error: countError };
@@ -25,11 +31,14 @@ export async function getLeads(
     };
   }
 
-  const { data, error } = await supabase
-    .from("leads")
-    .select("*")
-    .range(from, to);
-    
+  let dataQuery = supabase.from("leads").select("*");
+
+  if (query.status) {
+    dataQuery = dataQuery.eq("status", query.status);
+  }
+
+  const { data, error } = await dataQuery.range(from, to);
+
   return { data, count, error };
 }
 
