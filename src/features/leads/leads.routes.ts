@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { AppEnv } from "../../types/app";
 import { requireAuth } from "../../middleware/auth";
 import { requireOrganizationAccess } from "../../middleware/organization-access";
+import { requireRole } from "../../middleware/require-role";
 
 import {
   createLeadController,
@@ -20,6 +21,6 @@ leads.get("/", listLeadsController);
 leads.get("/:id", getLeadController);
 leads.post("/", createLeadController);
 leads.patch("/:id", updateLeadController);
-leads.delete("/:id", deleteLeadController);
+leads.delete("/:id", requireRole("admin"), deleteLeadController);
 
 export default leads;

@@ -17,7 +17,7 @@ export const requireOrganizationAccess = createMiddleware<AppEnv>(
     }
 
     c.set("organizationId", access.organizationId);
-    c.set("organiaztionRole", access.role);
+    c.set("organizationRole", access.role);
 
     await next();
   },

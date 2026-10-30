@@ -9,6 +9,6 @@ export type AppEnv = {
     supabase: AppSupabaseClient;
     requestId: string;
     organizationId: string;
-    organiaztionRole: OrganizationRole;
+    organizationRole: OrganizationRole;
   };
 };
