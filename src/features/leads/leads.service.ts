@@ -2,7 +2,6 @@ import {
   createLead,
   getLeadById,
   getLeads,
-  getUserOrganization,
   updateLead,
   deleteLead,
 } from "./leads.repository";
@@ -40,24 +39,10 @@ export async function findLeadById(
 
 export async function addLead(
   supabase: AppSupabaseClient,
+  organizationId: string,
   input: CreateLeadInput,
 ) {
-  const { data: membership, error: membershipError } =
-    await getUserOrganization(supabase);
-
-  if (membershipError || !membership) {
-    throw new AppError(
-      "ORGANIZATION_MEMBERSHIP_NOT_FOUND",
-      403,
-      "User does not belong to an organization!",
-    );
-  }
-
-  const { data, error } = await createLead(
-    supabase,
-    membership.organization_id,
-    input,
-  );
+  const { data, error } = await createLead(supabase, organizationId, input);
 
   if (error || !data) {
     throw new AppError("LEAD_CREATE_FAILED", 500, "Failed to create lead!");

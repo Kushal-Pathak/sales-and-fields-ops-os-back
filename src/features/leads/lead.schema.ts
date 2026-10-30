@@ -10,7 +10,7 @@ export const leadStatusSchema = z.enum([
 
 export const createLeadSchema = z.object({
   first_name: z.string().trim().min(1),
-  last_name: z.string().trim().min(1),
+  last_name: z.string().trim().min(1).optional(),
   email: z.email().optional(),
   phone: z.string().trim().optional(),
 });

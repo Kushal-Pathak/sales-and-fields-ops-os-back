@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { AppEnv } from "../../types/app";
 import { requireAuth } from "../../middleware/auth";
+import { requireOrganizationAccess } from "../../middleware/organization-access";
+
 import {
   createLeadController,
   deleteLeadController,
@@ -11,10 +13,13 @@ import {
 
 const leads = new Hono<AppEnv>();
 
-leads.get("/", requireAuth, listLeadsController);
-leads.get("/:id", requireAuth, getLeadController);
-leads.post("/", requireAuth, createLeadController);
-leads.patch("/:id", requireAuth, updateLeadController);
-leads.delete("/:id", requireAuth, deleteLeadController)
+leads.use("*", requireAuth);
+leads.use("*", requireOrganizationAccess);
+
+leads.get("/", listLeadsController);
+leads.get("/:id", getLeadController);
+leads.post("/", createLeadController);
+leads.patch("/:id", updateLeadController);
+leads.delete("/:id", deleteLeadController);
 
 export default leads;

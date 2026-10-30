@@ -1,5 +1,6 @@
 import type { Env } from "../config/env";
 import { AppSupabaseClient } from "./supabase";
+import type { OrganizationRole } from "../core/auth/roles";
 
 export type AppEnv = {
   Bindings: Env;
@@ -7,5 +8,7 @@ export type AppEnv = {
     userId: string;
     supabase: AppSupabaseClient;
     requestId: string;
+    organizationId: string;
+    organiaztionRole: OrganizationRole;
   };
 };

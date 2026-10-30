@@ -66,14 +66,6 @@ export async function getLeadById(supabase: AppSupabaseClient, leadId: string) {
   return supabase.from("leads").select("*").eq("id", leadId).single();
 }
 
-export async function getUserOrganization(supabase: AppSupabaseClient) {
-  return supabase
-    .from("organization_members")
-    .select("organization_id")
-    .limit(1)
-    .single();
-}
-
 export async function createLead(
   supabase: AppSupabaseClient,
   organizationId: string,
