@@ -69,11 +69,16 @@ export async function getLeadById(supabase: AppSupabaseClient, leadId: string) {
 export async function createLead(
   supabase: AppSupabaseClient,
   organizationId: string,
+  assignedTo: string | null,
   input: CreateLeadInput,
 ) {
   return supabase
     .from("leads")
-    .insert({ ...input, organization_id: organizationId })
+    .insert({
+      ...input,
+      organization_id: organizationId,
+      assigned_to: assignedTo,
+    })
     .select()
     .single();
 }

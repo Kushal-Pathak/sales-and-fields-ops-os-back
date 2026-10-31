@@ -45,9 +45,18 @@ export async function createLeadController(c: Context<AppEnv>) {
 
   const supabase = c.get("supabase");
 
+  const userId = c.get("userId");
+  const organizationRole = c.get("organizationRole");
+
   const organizationId = c.get("organizationId");
 
-  const data = await addLead(supabase, organizationId, input);
+  const data = await addLead(
+    supabase,
+    organizationId,
+    userId,
+    organizationRole,
+    input,
+  );
 
   return c.json({ data }, 201);
 }

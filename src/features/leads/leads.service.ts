@@ -10,6 +10,7 @@ import type { UpdateLeadInput } from "./lead.schema";
 import { AppError } from "../../core/errors/app-error";
 import type { AppSupabaseClient } from "../../types/supabase";
 import { ListLeadsQuery } from "./lead.schema";
+import { OrganizationRole } from "../../core/auth/roles";
 
 export async function listLeads(
   supabase: AppSupabaseClient,
@@ -40,9 +41,18 @@ export async function findLeadById(
 export async function addLead(
   supabase: AppSupabaseClient,
   organizationId: string,
+  userId: string,
+  role: OrganizationRole,
   input: CreateLeadInput,
 ) {
-  const { data, error } = await createLead(supabase, organizationId, input);
+  const assignedTo = role === "staff" ? userId : null;
+
+  const { data, error } = await createLead(
+    supabase,
+    organizationId,
+    assignedTo,
+    input,
+  );
 
   if (error || !data) {
     throw new AppError("LEAD_CREATE_FAILED", 500, "Failed to create lead!");
