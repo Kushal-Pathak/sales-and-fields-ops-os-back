@@ -21,3 +21,22 @@ export async function getOrganizationAccess(
 
   return { organizationId: data.organization_id, role: data.role };
 }
+
+export async function isOrganizationMember(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  userId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("organization_members")
+    .select("user_id")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error || data == null) {
+    return false;
+  }
+
+  return true;
+}

@@ -11,6 +11,8 @@ import { AppError } from "../../core/errors/app-error";
 import type { AppSupabaseClient } from "../../types/supabase";
 import { ListLeadsQuery } from "./lead.schema";
 import { OrganizationRole } from "../../core/auth/roles";
+import { assignLead } from "./leads.repository";
+import { isOrganizationMember } from "../../core/auth/organization-access";
 
 export async function listLeads(
   supabase: AppSupabaseClient,
@@ -88,6 +90,41 @@ export async function removeLead(supabase: AppSupabaseClient, leadId: string) {
       404,
       "Lead not found or delete failed!",
     );
+  }
+
+  return data;
+}
+
+export async function assignLeadToUser(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  leadId: string,
+  assignedTo: string | null,
+) {
+  if (assignedTo !== null) {
+    const isMember = await isOrganizationMember(
+      supabase,
+      organizationId,
+      assignedTo,
+    );
+
+    if (!isMember) {
+      throw new AppError(
+        "INVALID_ASSIGNEE",
+        400,
+        "Assigned user does not belong to this organization!",
+      );
+    }
+  }
+
+  const { data, error } = await assignLead(supabase, leadId, assignedTo);
+
+  if (error) {
+    throw new AppError("LEAD_ASSIGNMENT_FAILED", 500, "Failed to assign lead!");
+  }
+  
+  if (!data) {
+    throw new AppError("LEAD_NOT_FOUND", 404, "Lead not found!");
   }
 
   return data;

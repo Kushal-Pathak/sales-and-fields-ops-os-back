@@ -35,3 +35,9 @@ export const listLeadsQuerySchema = z.object({
 });
 
 export type ListLeadsQuery = z.infer<typeof listLeadsQuerySchema>;
+
+export const assignLeadSchema = z.object({
+  assigned_to: z.uuid().nullable(),
+});
+
+export type AssignLeadInput = z.infer<typeof assignLeadSchema>;

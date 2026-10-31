@@ -5,6 +5,7 @@ import { requireOrganizationAccess } from "../../middleware/organization-access"
 import { requireRole } from "../../middleware/require-role";
 
 import {
+  assignLeadController,
   createLeadController,
   deleteLeadController,
   getLeadController,
@@ -22,5 +23,6 @@ leads.get("/:id", getLeadController);
 leads.post("/", createLeadController);
 leads.patch("/:id", updateLeadController);
 leads.delete("/:id", requireRole("admin"), deleteLeadController);
+leads.patch("/:id/assign", requireRole("admin"), assignLeadController);
 
 export default leads;

@@ -1,6 +1,7 @@
 import type { CreateLeadInput, UpdateLeadInput } from "./lead.schema";
 import type { AppSupabaseClient } from "../../types/supabase";
 import type { ListLeadsQuery } from "./lead.schema";
+import { UUID } from "node:crypto";
 
 export async function getLeads(
   supabase: AppSupabaseClient,
@@ -98,4 +99,17 @@ export async function updateLead(
 
 export async function deleteLead(supabase: AppSupabaseClient, leadId: string) {
   return supabase.from("leads").delete().eq("id", leadId).select().single();
+}
+
+export async function assignLead(
+  supabase: AppSupabaseClient,
+  leadId: string,
+  assignedTo: string | null,
+) {
+  return supabase
+    .from("leads")
+    .update({ assigned_to: assignedTo })
+    .eq("id", leadId)
+    .select()
+    .single();
 }
