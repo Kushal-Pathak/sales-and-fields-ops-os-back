@@ -1,5 +1,22 @@
 import { OrganizationRole } from "../../core/auth/roles";
 import type { AppSupabaseClient } from "../../types/supabase";
+import type { AddOrganizationMemberInput } from "./organization-member.schema";
+
+export async function addOrganizationMember(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  input: AddOrganizationMemberInput,
+) {
+  return supabase
+    .from("organization_members")
+    .insert({
+      organization_id: organizationId,
+      user_id: input.user_id,
+      role: input.role,
+    })
+    .select("user_id, role, created_at")
+    .single();
+}
 
 export async function getOrganizationMembers(
   supabase: AppSupabaseClient,
@@ -48,5 +65,19 @@ export async function getOrganizationMember(
     .select("user_id, role")
     .eq("organization_id", organizationId)
     .eq("user_id", userId)
+    .maybeSingle();
+}
+
+export async function deleteOrganizationMember(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  userId: string,
+) {
+  return supabase
+    .from("organization_members")
+    .delete()
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .select("user_id, role")
     .maybeSingle();
 }

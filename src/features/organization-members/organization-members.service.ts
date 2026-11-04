@@ -4,9 +4,46 @@ import {
   getOrganizationMember,
   getOrganizationMembers,
   updateOrganizationMemberRole,
+  deleteOrganizationMember,
 } from "./organization-members.repository";
 import { AppError } from "../../core/errors/app-error";
 import { OrganizationRole } from "../../core/auth/roles";
+import type { AddOrganizationMemberInput } from "./organization-member.schema";
+import { addOrganizationMember } from "./organization-members.repository";
+
+export async function createOrganizationMember(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  input: AddOrganizationMemberInput,
+) {
+  const { data, error } = await addOrganizationMember(
+    supabase,
+    organizationId,
+    input,
+  );
+
+  if (error?.code === "23505") {
+    throw new AppError(
+      "MEMBER_ALREADY_EXISTS",
+      409,
+      "User already belongs to this organization!",
+    );
+  }
+
+  if (error?.code === "23503") {
+    throw new AppError("INVALID_USER", 400, "User does not exist!");
+  }
+
+  if (error || !data) {
+    throw new AppError(
+      "ORGANIZATION_MEMBER_CREATE_FAILED",
+      500,
+      "Failed to add organization member!",
+    );
+  }
+
+  return data;
+}
 
 export async function listOrganizationMembers(
   supabase: AppSupabaseClient,
@@ -83,6 +120,81 @@ export async function changeOrganizationMembersRole(
       "ORGANIZATION_MEMBER_ROLE_UPDATE_FAILED",
       500,
       "Failed to update organization member role!",
+    );
+  }
+
+  return data;
+}
+
+export async function removeOrganizationMember(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  userId: string,
+) {
+  const { data: member, error: memberError } = await getOrganizationMember(
+    supabase,
+    organizationId,
+    userId,
+  );
+
+  if (memberError) {
+    throw new AppError(
+      "MEMBER_FETCH_FAILED",
+      500,
+      "Failed to fetch organization member!",
+    );
+  }
+
+  if (!member) {
+    throw new AppError(
+      "MEMBER_NOT_FOUND",
+      404,
+      "Organization member not found!",
+    );
+  }
+
+  if (member.role === "admin") {
+    const { count, error } = await getOrganizationAdminCount(
+      supabase,
+      organizationId,
+    );
+
+    if (error || count === null) {
+      throw new AppError(
+        "ADMIN_COUNT_FAILED",
+        500,
+        "Failed to count organization admins!",
+      );
+    }
+
+    if (count <= 1) {
+      throw new AppError(
+        "LAST_ADMIN_REQUIRED",
+        400,
+        "Cannot remove the last organization admin!",
+      );
+    }
+  }
+
+  const { data, error } = await deleteOrganizationMember(
+    supabase,
+    organizationId,
+    userId,
+  );
+
+  if (error) {
+    throw new AppError(
+      "MEMBER_DELETE_FAILED",
+      500,
+      "Failed to remove organization member!",
+    );
+  }
+
+  if (!data) {
+    throw new AppError(
+      "MEMBER_NOT_FOUND",
+      404,
+      "Organization member not found!",
     );
   }
 
