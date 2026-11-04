@@ -6,7 +6,7 @@ import { getOrganizationAccess } from "../core/auth/organization-access";
 export const requireOrganizationAccess = createMiddleware<AppEnv>(
   async (c, next) => {
     const supabase = c.get("supabase");
-    const access = await getOrganizationAccess(supabase);
+    const access = await getOrganizationAccess(supabase, c.get("userId"));
 
     if (!access) {
       throw new AppError(

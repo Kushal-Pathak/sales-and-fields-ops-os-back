@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { AppEnv } from "./types/app";
 import { requireAuth } from "./middleware/auth";
 import leads from "./features/leads/leads.routes";
+import organizationMembers from "./features/organization-members/organization-members.routes";
 import { errorHandler } from "./core/errors/error-handler";
 import { requestId } from "./middleware/request-id";
 import { requestLogger } from "./middleware/request-logger";
@@ -29,7 +30,7 @@ app.use(
 );
 
 app.get("/", (c) => {
-  return c.text("Pilot CRM API is running.");
+  return c.text("Sales and Fields Ops OS Back API is running.");
 });
 
 app.get("/health", (c) => {
@@ -41,6 +42,7 @@ app.get("/auth-test", requireAuth, (c) => {
 });
 
 app.route("/api/v1/leads", leads);
+app.route("/api/v1/organization-members", organizationMembers);
 
 app.notFound((c) => {
   return c.json(

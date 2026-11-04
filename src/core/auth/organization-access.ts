@@ -8,10 +8,12 @@ export type OrganizationAccess = {
 
 export async function getOrganizationAccess(
   supabase: AppSupabaseClient,
+  userId: string,
 ): Promise<OrganizationAccess | null> {
   const { data, error } = await supabase
     .from("organization_members")
     .select("organization_id, role")
+    .eq("user_id", userId)
     .limit(1)
     .single();
 
