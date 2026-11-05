@@ -13,6 +13,8 @@ import { ListLeadsQuery } from "./lead.schema";
 import { OrganizationRole } from "../../core/auth/roles";
 import { assignLead } from "./leads.repository";
 import { isOrganizationMember } from "../../core/auth/organization-access";
+import { isValidStatusTransition } from "./lead-lifecycle";
+import { leadStatusSchema } from "./lead.schema";
 
 export async function listLeads(
   supabase: AppSupabaseClient,
@@ -68,6 +70,20 @@ export async function editLead(
   leadId: string,
   input: UpdateLeadInput,
 ) {
+  if (input.status !== undefined) {
+    const currentLead = await findLeadById(supabase, leadId);
+
+    const currentStatus = leadStatusSchema.parse(currentLead.status);
+
+    if (!isValidStatusTransition(currentStatus, input.status)) {
+      throw new AppError(
+        "INVALID_STATUS_TRANSITION",
+        409,
+        `Cannot change lead status from ${currentStatus} to ${input.status}`,
+      );
+    }
+  }
+
   const { data, error } = await updateLead(supabase, leadId, input);
 
   if (error || !data) {
@@ -122,7 +138,7 @@ export async function assignLeadToUser(
   if (error) {
     throw new AppError("LEAD_ASSIGNMENT_FAILED", 500, "Failed to assign lead!");
   }
-  
+
   if (!data) {
     throw new AppError("LEAD_NOT_FOUND", 404, "Lead not found!");
   }

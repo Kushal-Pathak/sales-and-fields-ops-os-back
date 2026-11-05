@@ -88,13 +88,15 @@ export async function updateLead(
   supabase: AppSupabaseClient,
   leadId: string,
   input: UpdateLeadInput,
+  expectedStatus?: string,
 ) {
-  return supabase
-    .from("leads")
-    .update(input)
-    .eq("id", leadId)
-    .select()
-    .single();
+  let query = supabase.from("leads").update(input).eq("id", leadId);
+
+  if (expectedStatus !== undefined) {
+    query = query.eq("status", expectedStatus);
+  }
+
+  return query.select().maybeSingle();
 }
 
 export async function deleteLead(supabase: AppSupabaseClient, leadId: string) {
