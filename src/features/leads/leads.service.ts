@@ -70,6 +70,8 @@ export async function editLead(
   leadId: string,
   input: UpdateLeadInput,
 ) {
+  let expectedStatus: string | undefined;
+
   if (input.status !== undefined) {
     const currentLead = await findLeadById(supabase, leadId);
 
@@ -82,16 +84,31 @@ export async function editLead(
         `Cannot change lead status from ${currentStatus} to ${input.status}`,
       );
     }
+
+    expectedStatus = currentStatus;
   }
 
-  const { data, error } = await updateLead(supabase, leadId, input);
+  const { data, error } = await updateLead(
+    supabase,
+    leadId,
+    input,
+    expectedStatus,
+  );
 
-  if (error || !data) {
-    throw new AppError(
-      "LEAD_UPDATE_FAILED",
-      404,
-      "Lead not found or update failed!",
-    );
+  if (error) {
+    throw new AppError("LEAD_UPDATE_FAILED", 500, "Failed to update lead");
+  }
+
+  if (!data) {
+    if (expectedStatus !== undefined) {
+      throw new AppError(
+        "LEAD_STATUS_CONFLICT",
+        409,
+        "Lead may have changed. Refresh and try again.",
+      );
+    }
+
+    throw new AppError("LEAD_NOT_FOUND", 404, "Lead not found");
   }
 
   return data;
