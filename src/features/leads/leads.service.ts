@@ -15,6 +15,7 @@ import { assignLead } from "./leads.repository";
 import { isOrganizationMember } from "../../core/auth/organization-access";
 import { isValidStatusTransition } from "./lead-lifecycle";
 import { leadStatusSchema } from "./lead.schema";
+import { getLeadActivities } from "./lead-activities.repository";
 
 export async function listLeads(
   supabase: AppSupabaseClient,
@@ -158,6 +159,26 @@ export async function assignLeadToUser(
 
   if (!data) {
     throw new AppError("LEAD_NOT_FOUND", 404, "Lead not found!");
+  }
+
+  return data;
+}
+
+export async function listLeadActivities(
+  supabase: AppSupabaseClient,
+  leadId: string,
+) {
+  // Ensure the user can access this lead
+  await findLeadById(supabase, leadId);
+
+  const { data, error } = await getLeadActivities(supabase, leadId);
+
+  if (error) {
+    throw new AppError(
+      "LEAD_ACTIVITIES_FETCH_FAILED",
+      500,
+      "Failed to fetch lead activities",
+    );
   }
 
   return data;

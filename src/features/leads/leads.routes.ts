@@ -11,6 +11,7 @@ import {
   getLeadController,
   listLeadsController,
   updateLeadController,
+  listLeadActivitiesController,
 } from "./leads.controller";
 
 const leads = new Hono<AppEnv>();
@@ -24,5 +25,6 @@ leads.post("/", createLeadController);
 leads.patch("/:id", updateLeadController);
 leads.delete("/:id", requireRole("admin"), deleteLeadController);
 leads.patch("/:id/assign", requireRole("admin"), assignLeadController);
+leads.get("/:id/activities", listLeadActivitiesController);
 
 export default leads;

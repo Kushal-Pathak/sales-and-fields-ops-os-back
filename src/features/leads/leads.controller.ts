@@ -7,6 +7,7 @@ import {
   editLead,
   removeLead,
   assignLeadToUser,
+  listLeadActivities,
 } from "./leads.service";
 import {
   createLeadSchema,
@@ -119,6 +120,20 @@ export async function assignLeadController(c: Context<AppEnv>) {
     leadId,
     input.assigned_to,
   );
+
+  return c.json({ data });
+}
+
+export async function listLeadActivitiesController(c: Context<AppEnv>) {
+  const leadId = c.req.param("id");
+
+  if (!leadId) {
+    throw new AppError("LEAD_ID_REQUIRED", 400, "Lead ID is required");
+  }
+
+  const supabase = c.get("supabase");
+
+  const data = await listLeadActivities(supabase, leadId);
 
   return c.json({ data });
 }
