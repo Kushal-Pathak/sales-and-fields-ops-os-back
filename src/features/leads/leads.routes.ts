@@ -3,6 +3,12 @@ import { AppEnv } from "../../types/app";
 import { requireAuth } from "../../middleware/auth";
 import { requireOrganizationAccess } from "../../middleware/organization-access";
 import { requireRole } from "../../middleware/require-role";
+import {
+  createLeadNoteController,
+  listLeadNotesController,
+  updateLeadNoteController,
+  deleteLeadNoteController,
+} from "./lead-notes.controller";
 
 import {
   assignLeadController,
@@ -26,5 +32,9 @@ leads.patch("/:id", updateLeadController);
 leads.delete("/:id", requireRole("admin"), deleteLeadController);
 leads.patch("/:id/assign", requireRole("admin"), assignLeadController);
 leads.get("/:id/activities", listLeadActivitiesController);
+leads.get("/:id/notes", listLeadNotesController);
+leads.post("/:id/notes", createLeadNoteController);
+leads.patch("/:id/notes/:noteId", updateLeadNoteController);
+leads.delete("/:id/notes/:noteId", deleteLeadNoteController);
 
 export default leads;
