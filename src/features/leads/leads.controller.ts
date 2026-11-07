@@ -17,6 +17,7 @@ import {
 import { validate } from "../../shared/validation/validate";
 import { listLeadsQuerySchema } from "./lead.schema";
 import { AppError } from "../../core/errors/app-error";
+import { validateUuid } from "../../shared/validation/validate-uuid";
 
 export async function listLeadsController(c: Context<AppEnv>) {
   const query = validate(listLeadsQuerySchema, c.req.query());
@@ -32,11 +33,7 @@ export async function listLeadsController(c: Context<AppEnv>) {
 }
 
 export async function getLeadController(c: Context<AppEnv>) {
-  const leadId = c.req.param("id");
-
-  if (!leadId) {
-    return c.json({ error: "Lead ID is required" }, 400);
-  }
+  const leadId = validateUuid(c.req.param("id"), "Lead ID");
 
   const supabase = c.get("supabase");
 
@@ -69,11 +66,7 @@ export async function createLeadController(c: Context<AppEnv>) {
 }
 
 export async function updateLeadController(c: Context<AppEnv>) {
-  const leadId = c.req.param("id");
-
-  if (!leadId) {
-    return c.json({ error: "Lead ID is required!" }, 400);
-  }
+  const leadId = validateUuid(c.req.param("id"), "Lead ID");
 
   const body = await c.req.json();
 
@@ -87,11 +80,7 @@ export async function updateLeadController(c: Context<AppEnv>) {
 }
 
 export async function deleteLeadController(c: Context<AppEnv>) {
-  const leadId = c.req.param("id");
-
-  if (!leadId) {
-    return c.json({ error: "Lead ID is required!" }, 400);
-  }
+  const leadId = validateUuid(c.req.param("id"), "Lead ID");
 
   const supabase = c.get("supabase");
 
@@ -101,11 +90,7 @@ export async function deleteLeadController(c: Context<AppEnv>) {
 }
 
 export async function assignLeadController(c: Context<AppEnv>) {
-  const leadId = c.req.param("id");
-
-  if (!leadId) {
-    throw new AppError("LEAD_ID_REQUIRED", 400, "Lead ID is required");
-  }
+  const leadId = validateUuid(c.req.param("id"), "Lead ID");
 
   const body = await c.req.json();
 
@@ -125,11 +110,7 @@ export async function assignLeadController(c: Context<AppEnv>) {
 }
 
 export async function listLeadActivitiesController(c: Context<AppEnv>) {
-  const leadId = c.req.param("id");
-
-  if (!leadId) {
-    throw new AppError("LEAD_ID_REQUIRED", 400, "Lead ID is required");
-  }
+  const leadId = validateUuid(c.req.param("id"), "Lead ID");
 
   const supabase = c.get("supabase");
 

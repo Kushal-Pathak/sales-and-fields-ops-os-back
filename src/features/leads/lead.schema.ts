@@ -17,9 +17,14 @@ export const createLeadSchema = z.object({
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;
 
-export const updateLeadSchema = createLeadSchema.partial().extend({
-  status: leadStatusSchema.optional(),
-});
+export const updateLeadSchema = createLeadSchema
+  .partial()
+  .extend({
+    status: leadStatusSchema.optional(),
+  })
+  .refine((data) => Object.values(data).some((value) => value !== undefined), {
+    message: "At least one field is required to update a lead",
+  });
 
 export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;
 
