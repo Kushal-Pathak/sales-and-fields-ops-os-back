@@ -16,6 +16,7 @@ import { isOrganizationMember } from "../../core/auth/organization-access";
 import { isValidStatusTransition } from "./lead-lifecycle";
 import { leadStatusSchema } from "./lead.schema";
 import { getLeadActivities } from "./lead-activities.repository";
+import { POSTGRES_ERROR_CODES } from "../../platform/database/postgres-errors";
 
 export async function listLeads(
   supabase: AppSupabaseClient,
@@ -36,7 +37,11 @@ export async function findLeadById(
 ) {
   const { data, error } = await getLeadById(supabase, leadId);
 
-  if (error || !data) {
+  if (error) {
+    throw new AppError("LEAD_FETCH_FAILED", 500, "Failed to fetch lead!");
+  }
+
+  if (!data) {
     throw new AppError("LEAD_NOT_FOUND", 404, "Lead not found!");
   }
 
@@ -98,7 +103,7 @@ export async function editLead(
 
   if (error) {
     if (
-      error.code === "23514" &&
+      error.code === POSTGRES_ERROR_CODES.CHECK_VIOLATION &&
       error.message.includes("Invalid lead status transition:")
     ) {
       throw new AppError(
@@ -129,12 +134,12 @@ export async function editLead(
 export async function removeLead(supabase: AppSupabaseClient, leadId: string) {
   const { data, error } = await deleteLead(supabase, leadId);
 
-  if (error || !data) {
-    throw new AppError(
-      "LEAD_DELETE_FAILED",
-      404,
-      "Lead not found or delete failed!",
-    );
+  if (error) {
+    throw new AppError("LEAD_DELETE_FAILED", 500, "Failed to delete lead!");
+  }
+
+  if (!data) {
+    throw new AppError("LEAD_NOT_FOUND", 404, "Lead not found!");
   }
 
   return data;
@@ -165,6 +170,18 @@ export async function assignLeadToUser(
   const { data, error } = await assignLead(supabase, leadId, assignedTo);
 
   if (error) {
+    if (
+      assignedTo !== null &&
+      error.code === POSTGRES_ERROR_CODES.FOREIGN_KEY_VIOLATION &&
+      error.message.includes("leads_assignee_membership_fk")
+    ) {
+      throw new AppError(
+        "INVALID_ASSIGNEE",
+        409,
+        "The selected assignee is no longer valid. Refresh and try again.",
+      );
+    }
+
     throw new AppError("LEAD_ASSIGNMENT_FAILED", 500, "Failed to assign lead!");
   }
 

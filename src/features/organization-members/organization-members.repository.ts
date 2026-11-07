@@ -41,7 +41,7 @@ export async function updateOrganizationMemberRole(
     .eq("organization_id", organizationId)
     .eq("user_id", userId)
     .select("user_id, role, created_at")
-    .single();
+    .maybeSingle();
 }
 
 export async function getOrganizationAdminCount(

@@ -1,12 +1,16 @@
 import type { AppSupabaseClient } from "../../types/supabase";
-import type { CreateLeadNoteInput } from "./lead-note.schema";
+import type {
+  CreateLeadNoteInput,
+  UpdateLeadNoteInput,
+} from "./lead-note.schema";
 import { AppError } from "../../core/errors/app-error";
 import { findLeadById } from "./leads.service";
-import { createLeadNote } from "./lead-notes.repository";
-import { getLeadNotes } from "./lead-notes.repository";
-import type { UpdateLeadNoteInput } from "./lead-note.schema";
-import { updateLeadNote } from "./lead-notes.repository";
-import { deleteLeadNote } from "./lead-notes.repository";
+import {
+  createLeadNote,
+  getLeadNotes,
+  updateLeadNote,
+  deleteLeadNote,
+} from "./lead-notes.repository";
 
 export async function addLeadNote(
   supabase: AppSupabaseClient,

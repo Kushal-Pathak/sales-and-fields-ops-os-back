@@ -1,7 +1,6 @@
 import type { CreateLeadInput, UpdateLeadInput } from "./lead.schema";
 import type { AppSupabaseClient } from "../../types/supabase";
 import type { ListLeadsQuery } from "./lead.schema";
-import { UUID } from "node:crypto";
 
 export async function getLeads(
   supabase: AppSupabaseClient,
@@ -32,7 +31,7 @@ export async function getLeads(
     return { data: null, count: null, error: countError };
   }
 
-  if (count != null && from > count) {
+  if (count != null && from >= count) {
     return {
       data: [],
       count,
@@ -64,7 +63,7 @@ export async function getLeads(
 }
 
 export async function getLeadById(supabase: AppSupabaseClient, leadId: string) {
-  return supabase.from("leads").select("*").eq("id", leadId).single();
+  return supabase.from("leads").select("*").eq("id", leadId).maybeSingle();
 }
 
 export async function createLead(
@@ -100,7 +99,12 @@ export async function updateLead(
 }
 
 export async function deleteLead(supabase: AppSupabaseClient, leadId: string) {
-  return supabase.from("leads").delete().eq("id", leadId).select().single();
+  return supabase
+    .from("leads")
+    .delete()
+    .eq("id", leadId)
+    .select()
+    .maybeSingle();
 }
 
 export async function assignLead(
@@ -113,5 +117,5 @@ export async function assignLead(
     .update({ assigned_to: assignedTo })
     .eq("id", leadId)
     .select()
-    .single();
+    .maybeSingle();
 }

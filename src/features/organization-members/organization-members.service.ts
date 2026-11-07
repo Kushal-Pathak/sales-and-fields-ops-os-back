@@ -1,15 +1,18 @@
-import { AppSupabaseClient } from "../../types/supabase";
+import type { AppSupabaseClient } from "../../types/supabase";
+import type { OrganizationRole } from "../../core/auth/roles";
+import type { AddOrganizationMemberInput } from "./organization-member.schema";
+
+import { AppError } from "../../core/errors/app-error";
+import { POSTGRES_ERROR_CODES } from "../../platform/database/postgres-errors";
+
 import {
+  addOrganizationMember,
   getOrganizationAdminCount,
   getOrganizationMember,
   getOrganizationMembers,
   updateOrganizationMemberRole,
   deleteOrganizationMember,
 } from "./organization-members.repository";
-import { AppError } from "../../core/errors/app-error";
-import { OrganizationRole } from "../../core/auth/roles";
-import type { AddOrganizationMemberInput } from "./organization-member.schema";
-import { addOrganizationMember } from "./organization-members.repository";
 
 export async function createOrganizationMember(
   supabase: AppSupabaseClient,
@@ -22,7 +25,10 @@ export async function createOrganizationMember(
     input,
   );
 
-  if (error?.code === "23505") {
+  if (
+    error?.code === POSTGRES_ERROR_CODES.UNIQUE_VIOLATION &&
+    error.message.includes("organization_members_pkey")
+  ) {
     throw new AppError(
       "MEMBER_ALREADY_EXISTS",
       409,
@@ -30,8 +36,22 @@ export async function createOrganizationMember(
     );
   }
 
-  if (error?.code === "23503") {
+  if (
+    error?.code === POSTGRES_ERROR_CODES.FOREIGN_KEY_VIOLATION &&
+    error.message.includes("organization_members_user_id_fkey")
+  ) {
     throw new AppError("INVALID_USER", 400, "User does not exist!");
+  }
+
+  if (
+    error?.code === POSTGRES_ERROR_CODES.FOREIGN_KEY_VIOLATION &&
+    error.message.includes("organization_members_organization_id_fkey")
+  ) {
+    throw new AppError(
+      "ORGANIZATION_NOT_FOUND",
+      404,
+      "Organization no longer exists!",
+    );
   }
 
   if (error || !data) {
@@ -77,11 +97,19 @@ export async function changeOrganizationMembersRole(
     userId,
   );
 
-  if (memberError || !member) {
+  if (memberError) {
+    throw new AppError(
+      "ORGANIZATION_MEMBER_FETCH_FAILED",
+      500,
+      "Failed to fetch organization member!",
+    );
+  }
+
+  if (!member) {
     throw new AppError(
       "ORGANIZATION_MEMBER_NOT_FOUND",
       404,
-      "Organization member not found",
+      "Organization member not found!",
     );
   }
 
@@ -91,7 +119,7 @@ export async function changeOrganizationMembersRole(
       organizationId,
     );
 
-    if (countError) {
+    if (countError || count === null) {
       throw new AppError(
         "ORGANIZATION_ADMIN_COUNT_FAILED",
         500,
@@ -102,7 +130,7 @@ export async function changeOrganizationMembersRole(
     if (count === 1) {
       throw new AppError(
         "LAST_ADMIN_REQUIRED",
-        400,
+        409,
         "The last organization admin cannot be demoted!",
       );
     }
@@ -117,12 +145,12 @@ export async function changeOrganizationMembersRole(
 
   if (error) {
     if (
-      error.code === "23514" &&
+      error.code === POSTGRES_ERROR_CODES.CHECK_VIOLATION &&
       error.message.includes("Cannot remove the last organization admin")
     ) {
       throw new AppError(
         "LAST_ADMIN_REQUIRED",
-        400,
+        409,
         "Cannot demote the last organization admin!",
       );
     }
@@ -158,7 +186,7 @@ export async function removeOrganizationMember(
 
   if (memberError) {
     throw new AppError(
-      "MEMBER_FETCH_FAILED",
+      "ORGANIZATION_MEMBER_FETCH_FAILED",
       500,
       "Failed to fetch organization member!",
     );
@@ -166,7 +194,7 @@ export async function removeOrganizationMember(
 
   if (!member) {
     throw new AppError(
-      "MEMBER_NOT_FOUND",
+      "ORGANIZATION_MEMBER_NOT_FOUND",
       404,
       "Organization member not found!",
     );
@@ -180,7 +208,7 @@ export async function removeOrganizationMember(
 
     if (error || count === null) {
       throw new AppError(
-        "ADMIN_COUNT_FAILED",
+        "ORGANIZATION_ADMIN_COUNT_FAILED",
         500,
         "Failed to count organization admins!",
       );
@@ -189,7 +217,7 @@ export async function removeOrganizationMember(
     if (count <= 1) {
       throw new AppError(
         "LAST_ADMIN_REQUIRED",
-        400,
+        409,
         "Cannot remove the last organization admin!",
       );
     }
@@ -203,17 +231,18 @@ export async function removeOrganizationMember(
 
   if (error) {
     if (
-      error.code === "23514" &&
+      error.code === POSTGRES_ERROR_CODES.CHECK_VIOLATION &&
       error.message.includes("Cannot remove the last organization admin")
     ) {
       throw new AppError(
         "LAST_ADMIN_REQUIRED",
-        400,
+        409,
         "Cannot remove the last organization admin!",
       );
     }
+
     throw new AppError(
-      "MEMBER_DELETE_FAILED",
+      "ORGANIZATION_MEMBER_DELETE_FAILED",
       500,
       "Failed to remove organization member!",
     );
@@ -221,7 +250,7 @@ export async function removeOrganizationMember(
 
   if (!data) {
     throw new AppError(
-      "MEMBER_NOT_FOUND",
+      "ORGANIZATION_MEMBER_NOT_FOUND",
       404,
       "Organization member not found!",
     );
