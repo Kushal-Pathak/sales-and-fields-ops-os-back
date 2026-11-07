@@ -115,11 +115,30 @@ export async function changeOrganizationMembersRole(
     role,
   );
 
-  if (error || !data) {
+  if (error) {
+    if (
+      error.code === "23514" &&
+      error.message.includes("Cannot remove the last organization admin")
+    ) {
+      throw new AppError(
+        "LAST_ADMIN_REQUIRED",
+        400,
+        "Cannot demote the last organization admin!",
+      );
+    }
+
     throw new AppError(
       "ORGANIZATION_MEMBER_ROLE_UPDATE_FAILED",
       500,
       "Failed to update organization member role!",
+    );
+  }
+
+  if (!data) {
+    throw new AppError(
+      "ORGANIZATION_MEMBER_NOT_FOUND",
+      404,
+      "Organization member not found!",
     );
   }
 
@@ -183,6 +202,16 @@ export async function removeOrganizationMember(
   );
 
   if (error) {
+    if (
+      error.code === "23514" &&
+      error.message.includes("Cannot remove the last organization admin")
+    ) {
+      throw new AppError(
+        "LAST_ADMIN_REQUIRED",
+        400,
+        "Cannot remove the last organization admin!",
+      );
+    }
     throw new AppError(
       "MEMBER_DELETE_FAILED",
       500,
