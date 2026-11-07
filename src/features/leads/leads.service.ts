@@ -97,6 +97,17 @@ export async function editLead(
   );
 
   if (error) {
+    if (
+      error.code === "23514" &&
+      error.message.includes("Invalid lead status transition:")
+    ) {
+      throw new AppError(
+        "INVALID_STATUS_TRANSITION",
+        409,
+        "The requested lead status change is not allowed",
+      );
+    }
+
     throw new AppError("LEAD_UPDATE_FAILED", 500, "Failed to update lead");
   }
 
