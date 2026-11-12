@@ -10,7 +10,12 @@
     "db:types": "supabase gen types --lang typescript --linked --schema public > src/types/database.ts",
     "test": "vitest run src",
     "test:db": "supabase test db",
-    "test:integration": "vitest run supabase/tests/integration"
+    "test:integration": "vitest run supabase/tests/integration --no-file-parallelism",
+    "dev:test": "wrangler dev --env test --port 8788",
+    "stack:test:start": "SUPABASE_EXPERIMENTAL_STACK=1 supabase stack start --stack test",
+    "stack:test:status": "SUPABASE_EXPERIMENTAL_STACK=1 supabase stack status --stack test",
+    "stack:test:stop": "SUPABASE_EXPERIMENTAL_STACK=1 supabase stack stop --stack test",
+    "test:integration:full": "bash scripts/test-integration.sh"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +23,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "start-server-and-test": "3.0.13",
     "supabase": "^3.1.0-beta.26",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0",

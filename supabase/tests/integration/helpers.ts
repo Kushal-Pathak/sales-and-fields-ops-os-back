@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
 import { expect } from "vitest";
 
-const API_URL = "http://127.0.0.1:8787";
-const SUPABASE_URL = "http://127.0.0.1:54321";
+// Dedicated local integration test environment.
+const API_URL = process.env.TEST_API_URL ?? "http://127.0.0.1:8788";
+const SUPABASE_URL = process.env.TEST_SUPABASE_URL ?? "http://127.0.0.1:30192";
 const TEST_PASSWORD = "Kathmandu@123";
 
 // Local test environment only.
-const envFile = readFileSync(".dev.vars", "utf8");
+const envFile = readFileSync(".dev.vars.test", "utf8");
 
 const keyLine = envFile
   .split(/\r?\n/)
