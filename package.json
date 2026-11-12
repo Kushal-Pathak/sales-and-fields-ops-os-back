@@ -8,8 +8,9 @@
     "typecheck": "tsc --noEmit",
     "deploy": "wrangler deploy",
     "db:types": "supabase gen types --lang typescript --linked --schema public > src/types/database.ts",
-    "test": "vitest run",
-    "test:integration": "vitest run tests/integration"
+    "test": "vitest run src",
+    "test:db": "supabase test db",
+    "test:integration": "vitest run supabase/tests/integration"
   },
   "keywords": [],
   "author": "",
