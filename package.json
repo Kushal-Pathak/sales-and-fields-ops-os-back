@@ -11,7 +11,7 @@
     "test": "vitest run src",
     "test:db": "bash scripts/test-db.sh",
     "test:integration": "vitest run supabase/tests/integration --no-file-parallelism",
-    "dev:test": "wrangler dev --env test --port 8788",
+    "dev:test": "wrangler dev --env test --port ${TEST_WORKER_PORT:-8788}",
     "stack:test:start": "SUPABASE_EXPERIMENTAL_STACK=1 supabase stack start --stack test",
     "stack:test:status": "SUPABASE_EXPERIMENTAL_STACK=1 supabase stack status --stack test",
     "stack:test:stop": "SUPABASE_EXPERIMENTAL_STACK=1 supabase stack stop --stack test",

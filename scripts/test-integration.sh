@@ -38,11 +38,31 @@ cleanup() {
 
 trap cleanup EXIT
 
+node scripts/generate-test-env.mjs
+
+# Ask the operating system to find an available local port.
+export TEST_WORKER_PORT="$(
+  node -e '
+    const net = require("node:net");
+    const server = net.createServer();
+
+    server.listen(0, "127.0.0.1", () => {
+      console.log(server.address().port);
+      server.close();
+    });
+  '
+)"
+
+# Tell integration tests where the Worker will run.
+export TEST_API_URL="http://127.0.0.1:${TEST_WORKER_PORT}"
+
+echo "Using TEST Worker port: ${TEST_WORKER_PORT}"
+
 echo "Starting test Worker and running integration tests..."
 
 # Start Worker, wait for /health, execute tests,
 # then automatically stop the Worker.
 npx --no-install start-server-and-test \
   dev:test \
-  http://127.0.0.1:8788/health \
+  "$TEST_API_URL/health" \
   test:integration

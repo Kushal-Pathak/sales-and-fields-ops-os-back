@@ -1,28 +1,32 @@
 import { readFileSync } from "node:fs";
 import { expect } from "vitest";
 
-// Dedicated local integration test environment.
+// Dedicated integration test Worker.
 const API_URL = process.env.TEST_API_URL ?? "http://127.0.0.1:8788";
-const SUPABASE_URL = process.env.TEST_SUPABASE_URL ?? "http://127.0.0.1:30192";
+
 const TEST_PASSWORD = "Kathmandu@123";
 
-// Local test environment only.
+// Same configuration file used by the test Worker.
 const envFile = readFileSync(".dev.vars.test", "utf8");
 
-const keyLine = envFile
-  .split(/\r?\n/)
-  .find((line) => line.trim().startsWith("SUPABASE_PUBLISHABLE_KEY="));
+// Read a named variable from .dev.vars.test.
+function getTestEnv(name: string): string {
+  const line = envFile
+    .split(/\r?\n/)
+    .find((line) => line.trim().startsWith(`${name}=`));
 
-if (!keyLine) {
-  throw new Error("Missing SUPABASE_PUBLISHABLE_KEY in .dev.vars");
+  if (!line) {
+    throw new Error(`Missing ${name} in .dev.vars.test`);
+  }
+
+  return line
+    .slice(line.indexOf("=") + 1)
+    .trim()
+    .replace(/^["']|["']$/g, "");
 }
 
-const publishableKey = keyLine
-  .split("=")
-  .slice(1)
-  .join("=")
-  .trim()
-  .replace(/^["']|["']$/g, "");
+const SUPABASE_URL = getTestEnv("SUPABASE_URL");
+const publishableKey = getTestEnv("SUPABASE_PUBLISHABLE_KEY");
 
 // Shared types
 export type Session = {
