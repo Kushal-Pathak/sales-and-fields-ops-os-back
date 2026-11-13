@@ -34,3 +34,6 @@ jobs:
 
       - name: Run unit tests
         run: npm test
+
+      - name: Run isolated database tests
+        run: npm run test:db
