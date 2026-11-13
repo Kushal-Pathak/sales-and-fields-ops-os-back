@@ -9,7 +9,7 @@
     "deploy": "wrangler deploy",
     "db:types": "supabase gen types --lang typescript --linked --schema public > src/types/database.ts",
     "test": "vitest run src",
-    "test:db": "supabase test db",
+    "test:db": "bash scripts/test-db.sh",
     "test:integration": "vitest run supabase/tests/integration --no-file-parallelism",
     "dev:test": "wrangler dev --env test --port 8788",
     "stack:test:start": "SUPABASE_EXPERIMENTAL_STACK=1 supabase stack start --stack test",
