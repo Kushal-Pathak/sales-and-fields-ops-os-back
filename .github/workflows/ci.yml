@@ -37,3 +37,6 @@ jobs:
 
       - name: Run isolated database tests
         run: npm run test:db
+
+      - name: Run isolated API integration tests
+        run: npm run test:integration:full
