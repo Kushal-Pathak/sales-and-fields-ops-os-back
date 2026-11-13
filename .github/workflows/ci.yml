@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -35,8 +36,24 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      # Start the TEST Supabase stack only once.
+      - name: Start isolated TEST Supabase
+        run: SUPABASE_EXPERIMENTAL_STACK=1 npx --no-install supabase stack start --stack test
+
+      # Reuse the already-running TEST stack.
       - name: Run isolated database tests
         run: npm run test:db
 
+      # Reuse the same TEST stack for API tests.
       - name: Run isolated API integration tests
         run: npm run test:integration:full
+
+      # Always attempt cleanup, even if tests fail.
+      - name: Stop isolated TEST Supabase
+        if: ${{ always() }}
+        run: |
+          if SUPABASE_EXPERIMENTAL_STACK=1 npx --no-install supabase stack status --stack test >/dev/null 2>&1; then
+            SUPABASE_EXPERIMENTAL_STACK=1 npx --no-install supabase stack stop --stack test
+          else
+            echo "No running TEST stack to stop."
+          fi
