@@ -140,18 +140,39 @@ Request → Middleware → Route → Controller → Service → Repository → S
 
 Read [`AGENTS.md`](./AGENTS.md) for detailed coding standards, security rules, and agent workflow. Claude Code can also load the same instructions through [`CLAUDE.md`](./CLAUDE.md).
 
+
 ## Testing
 
-Run both checks before opening a pull request:
+The backend includes three automated test suites:
+
+| Test type | Command | Purpose |
+| --- | --- | --- |
+| Unit | `npm test` | Test individual functions with mocked dependencies |
+| Database | `npm run test:db` | Test PostgreSQL constraints, triggers, and RLS |
+| API integration | `npm run test:integration:full` | Test HTTP endpoints using the real Worker and isolated Supabase |
+
+Run all checks together:
 
 ```bash
-npm run typecheck
-npm test
+npm run test:all
 ```
 
-Service unit tests use mocks and **do not require a live Supabase connection**. They verify service behavior but **do not replace database integration tests** for PostgreSQL constraints, RLS policies, and concurrency.
+This executes TypeScript checking and all 183 tests.
 
-The repository's `.github/workflows/ci.yml` is configured to run type checking and unit tests on pushes and pull requests targeting `main`, provided GitHub Actions can start the runner.
+### Test environment
+
+- Unit tests require no running database or Worker.
+- Database tests run inside an isolated local Supabase TEST database.
+- API integration tests automatically start a TEST Worker and connect to TEST Supabase.
+- Docker must be running for database and integration testing.
+- Test services are stopped automatically if the scripts started them.
+
+### Continuous Integration
+
+GitHub Actions runs TypeScript checks and all three test suites on pushes and pull requests targeting `main`.
+
+The `main` branch requires the CI status check to pass before pull requests can be merged.
+
 
 ## Security and development notes
 
