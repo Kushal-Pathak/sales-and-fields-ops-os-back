@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 set -euo pipefail
@@ -59,7 +58,16 @@ docker cp supabase/tests/001_crm_rls.test.sql \
 docker cp supabase/tests/002_crm_constraints.test.sql \
   "$container:/tmp/002_crm_constraints.test.sql"
 
-echo "Running 49 database tests..."
+docker cp supabase/tests/003_tasks_rls.test.sql \
+  "$container:/tmp/003_tasks_rls.test.sql"
+
+docker cp supabase/tests/004_tasks_integrity.test.sql \
+  "$container:/tmp/004_tasks_integrity.test.sql"
+
+docker cp supabase/tests/005_tasks_lifecycle.test.sql \
+  "$container:/tmp/005_tasks_lifecycle.test.sql"
+
+echo "Running database tests..."
 
 docker exec \
   -e PGHOST=127.0.0.1 \
@@ -70,4 +78,7 @@ docker exec \
   "$container" \
   pg_prove \
     /tmp/001_crm_rls.test.sql \
-    /tmp/002_crm_constraints.test.sql
+    /tmp/002_crm_constraints.test.sql \
+    /tmp/003_tasks_rls.test.sql \
+    /tmp/004_tasks_integrity.test.sql \
+    /tmp/005_tasks_lifecycle.test.sql

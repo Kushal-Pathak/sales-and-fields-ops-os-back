@@ -16,7 +16,8 @@
     "stack:test:status": "SUPABASE_EXPERIMENTAL_STACK=1 supabase stack status --stack test",
     "stack:test:stop": "SUPABASE_EXPERIMENTAL_STACK=1 supabase stack stop --stack test",
     "test:integration:full": "bash scripts/test-integration.sh",
-    "test:all": "npm run typecheck && npm test && npm run test:db && npm run test:integration:full"
+    "test:all": "npm run typecheck && npm test && npm run test:db && npm run test:integration:full",
+    "db:test:migrate": "bash scripts/migrate-test.sh"
   },
   "keywords": [],
   "author": "",
