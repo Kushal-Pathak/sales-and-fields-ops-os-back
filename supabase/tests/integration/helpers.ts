@@ -10,7 +10,7 @@ const TEST_PASSWORD = "Kathmandu@123";
 const envFile = readFileSync(".dev.vars.test", "utf8");
 
 // Read a named variable from .dev.vars.test.
-function getTestEnv(name: string): string {
+export function getTestEnv(name: string): string {
   const line = envFile
     .split(/\r?\n/)
     .find((line) => line.trim().startsWith(`${name}=`));
