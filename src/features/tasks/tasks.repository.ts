@@ -52,3 +52,19 @@ export async function getTasks(
 
   return { data, count, error };
 }
+
+/** Find one task within the active organization; RLS enforces role visibility. */
+export async function getTaskById(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  taskId: string,
+) {
+  // Fetch task fields only. Do not join the related lead: staff may be allowed
+  // to see their task without being permitted to see that lead.
+  return supabase
+    .from("tasks")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("id", taskId)
+    .maybeSingle();
+}

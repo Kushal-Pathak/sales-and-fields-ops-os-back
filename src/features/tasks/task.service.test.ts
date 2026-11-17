@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppSupabaseClient } from "../../types/supabase";
-import { getTasks } from "./tasks.repository";
-import { listTasks } from "./tasks.service";
+import { getTaskById, getTasks } from "./tasks.repository";
+import { findTaskById, listTasks } from "./tasks.service";
 import { listTasksQuerySchema } from "./tasks.schema";
 
 vi.mock("./tasks.repository", () => ({
   getTasks: vi.fn(),
+  getTaskById: vi.fn(),
 }));
 
 const supabase = {} as AppSupabaseClient;
@@ -129,5 +130,50 @@ describe("Task listing query validation", () => {
     { sortOrder: "random" },
   ])("rejects invalid query parameters: %j", (input) => {
     expect(listTasksQuerySchema.safeParse(input).success).toBe(false);
+  });
+});
+
+const taskId = "91111111-1111-4111-8111-111111111111";
+
+describe("Task Service - findTaskById", () => {
+  it("returns an RLS-visible task", async () => {
+    const task = { id: taskId, title: "Follow up" };
+    vi.mocked(getTaskById).mockReturnValue(
+      mockResult({ data: task, error: null }),
+    );
+
+    await expect(
+      findTaskById(supabase, organizationId, taskId),
+    ).resolves.toEqual(task);
+
+    expect(getTaskById).toHaveBeenCalledWith(supabase, organizationId, taskId);
+  });
+
+  it("returns 404 for a missing or RLS-hidden task", async () => {
+    vi.mocked(getTaskById).mockReturnValue(
+      mockResult({ data: null, error: null }),
+    );
+
+    await expect(
+      findTaskById(supabase, organizationId, taskId),
+    ).rejects.toMatchObject({
+      code: "TASK_NOT_FOUND",
+      status: 404,
+      message: "Task not found",
+    });
+  });
+
+  it("returns a safe 500 for database errors", async () => {
+    vi.mocked(getTaskById).mockReturnValue(
+      mockResult({ data: null, error: { message: "private SQL details" } }),
+    );
+
+    await expect(
+      findTaskById(supabase, organizationId, taskId),
+    ).rejects.toMatchObject({
+      code: "TASK_FETCH_FAILED",
+      status: 500,
+      message: "Failed to fetch task",
+    });
   });
 });
