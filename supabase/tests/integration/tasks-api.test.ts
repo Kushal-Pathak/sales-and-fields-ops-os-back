@@ -18,6 +18,8 @@ type Task = {
   priority: string;
 };
 
+type TaskResponse = { data: Task };
+
 type TasksResponse = {
   data: Task[];
   pagination: {
@@ -69,6 +71,11 @@ async function createFixture(
 
   expect(response.status, await response.text()).toBe(201);
   createdTasks.push({ id: task.id, owner });
+}
+
+async function fetchTask(token: string, id: string) {
+  const response = await apiRequest("GET", `${TASKS_PATH}/${id}`, token);
+  return expectJson<TaskResponse>(response, 200);
 }
 
 async function fetchTasks(token: string, query = "") {
@@ -250,6 +257,108 @@ describe("Task Listing API - Integration Tests", () => {
       await apiRequest("GET", `${TASKS_PATH}${query}`, ram.token),
       400,
       "VALIDATION_ERROR",
+    );
+  });
+
+  // --------------------------------------------------
+  // GET /api/v1/tasks/:id
+  // --------------------------------------------------
+
+  it("allows an admin to fetch a task by ID", async () => {
+    const result = await fetchTask(ram.token, taskIds.unassigned);
+    expect(result.data).toMatchObject({
+      id: taskIds.unassigned,
+      organization_id: ORG_A,
+      assigned_to: null,
+    });
+  });
+
+  it("allows staff to fetch their own assigned task", async () => {
+    const result = await fetchTask(hari.token, taskIds.assignedToHari);
+    expect(result.data).toMatchObject({
+      id: taskIds.assignedToHari,
+      assigned_to: hari.userId,
+    });
+  });
+
+  it("returns an assigned task without exposing the inaccessible lead", async () => {
+    const result = await fetchTask(
+      hari.token,
+      taskIds.assignedToHariPrivateLead,
+    );
+    expect(result.data.lead_id).toBe(PRIVATE_LEAD_ID);
+    // A relation ID is safe; do not return joined lead details.
+    expect(result.data).not.toHaveProperty("leads");
+    expect(result.data).not.toHaveProperty("lead");
+  });
+
+  it("does not expose another staff member's task", async () => {
+    await expectError(
+      await apiRequest(
+        "GET",
+        `${TASKS_PATH}/${taskIds.assignedToGita}`,
+        hari.token,
+      ),
+      404,
+      "TASK_NOT_FOUND",
+    );
+  });
+
+  it("hides other organizations' tasks even from admins", async () => {
+    await expectError(
+      await apiRequest(
+        "GET",
+        `${TASKS_PATH}/${taskIds.otherOrganization}`,
+        ram.token,
+      ),
+      404,
+      "TASK_NOT_FOUND",
+    );
+
+    await expectError(
+      await apiRequest(
+        "GET",
+        `${TASKS_PATH}/${taskIds.assignedToHari}`,
+        bina.token,
+      ),
+      404,
+      "TASK_NOT_FOUND",
+    );
+  });
+
+  it("returns 404 for a well-formed UUID that does not exist", async () => {
+    await expectError(
+      await apiRequest("GET", `${TASKS_PATH}/${randomUUID()}`, ram.token),
+      404,
+      "TASK_NOT_FOUND",
+    );
+  });
+
+  it("rejects malformed task IDs", async () => {
+    await expectError(
+      await apiRequest("GET", `${TASKS_PATH}/not-a-uuid`, ram.token),
+      400,
+      "INVALID_UUID",
+    );
+  });
+
+  it("requires authentication for a task detail request", async () => {
+    const response = await apiRequest(
+      "GET",
+      `${TASKS_PATH}/${taskIds.assignedToHari}`,
+    );
+    expect(response.status).toBe(401);
+  });
+
+  it("requires organization membership for a task detail request", async () => {
+    await expectError(
+      await apiRequest(
+        "GET",
+        `${TASKS_PATH}/${taskIds.assignedToHari}`,
+        ajay.token,
+      ),
+      403,
+      "ORGANIZATION_ACCESS_REQUIRED",
     );
   });
 });
