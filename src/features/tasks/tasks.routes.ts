@@ -6,6 +6,7 @@ import {
   createTaskController,
   getTaskController,
   listTasksController,
+  updateTaskController,
 } from "./tasks.controller";
 import { requireRole } from "../../middleware/require-role";
 
@@ -17,5 +18,6 @@ tasks.use("*", requireOrganizationAccess);
 tasks.get("/", listTasksController);
 tasks.get("/:id", getTaskController);
 tasks.post("/", requireRole("admin"), createTaskController);
+tasks.patch("/:id", updateTaskController);
 
 export default tasks;

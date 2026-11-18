@@ -1,14 +1,21 @@
 import { AppError } from "../../core/errors/app-error";
 import type { AppSupabaseClient } from "../../types/supabase";
-import type { CreateTaskInput, ListTasksQuery } from "./tasks.schema";
+import {
+  taskStatusSchema,
+  type CreateTaskInput,
+  type ListTasksQuery,
+  type UpdateTaskStatusInput,
+} from "./tasks.schema";
 import {
   getTaskAssignee,
   getTaskById,
   getTaskLead,
   getTasks,
   insertTask,
+  updateTaskStatus,
 } from "./tasks.repository";
 import { POSTGRES_ERROR_CODES } from "../../platform/database/postgres-errors";
+import { isValidTaskStatusTransition } from "./task-lifecycle";
 
 export async function listTasks(
   supabase: AppSupabaseClient,
@@ -121,6 +128,83 @@ export async function createTask(
 
   if (!data) {
     throw new AppError("TASK_CREATE_FAILED", 500, "Failed to create task");
+  }
+
+  return data;
+}
+
+export async function editTaskStatus(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  taskId: string,
+  input: UpdateTaskStatusInput,
+) {
+  // Check that the task exists and is accessible to the current user.
+  const currentTask = await findTaskById(supabase, organizationId, taskId);
+
+  const currentStatus = taskStatusSchema.parse(currentTask.status);
+
+  // An unchanged status is a successful no-op.
+  if (currentStatus === input.status) {
+    return currentTask;
+  }
+
+  if (!isValidTaskStatusTransition(currentStatus, input.status)) {
+    throw new AppError(
+      "INVALID_STATUS_TRANSITION",
+      409,
+      `Cannot change task status from ${currentStatus} to ${input.status}`,
+    );
+  }
+
+  // A completed task requires a completion timestamp.
+  // All other states require that timestamp to be NULL.
+  const update = {
+    status: input.status,
+    completed_at:
+      input.status === "completed" ? new Date().toISOString() : null,
+  };
+
+  const { data, error } = await updateTaskStatus(
+    supabase,
+    organizationId,
+    taskId,
+    update,
+    currentStatus,
+  );
+
+  if (error) {
+    if (
+      error.code === POSTGRES_ERROR_CODES.CHECK_VIOLATION &&
+      error.message.includes("Invalid task status transition:")
+    ) {
+      throw new AppError(
+        "INVALID_STATUS_TRANSITION",
+        409,
+        "The requested task status change is not allowed",
+      );
+    }
+
+    if (
+      error.code === POSTGRES_ERROR_CODES.CHECK_VIOLATION &&
+      error.message.includes("tasks_completion_consistency")
+    ) {
+      throw new AppError(
+        "TASK_STATUS_CONFLICT",
+        409,
+        "Task status and completion timestamp are inconsistent",
+      );
+    }
+
+    throw new AppError("TASK_UPDATE_FAILED", 500, "Failed to update task");
+  }
+
+  if (!data) {
+    throw new AppError(
+      "TASK_STATUS_CONFLICT",
+      409,
+      "Task may have changed. Refresh and try again.",
+    );
   }
 
   return data;

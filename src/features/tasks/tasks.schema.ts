@@ -35,3 +35,13 @@ export const createTaskSchema = z
   .strict();
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
+
+export const updateTaskStatusSchema = z
+  .object({
+    status: taskStatusSchema,
+  })
+  .strict();
+
+export type UpdateTaskStatusInput = z.infer<typeof updateTaskStatusSchema>;
+
+export type TaskStatus = z.infer<typeof taskStatusSchema>;
