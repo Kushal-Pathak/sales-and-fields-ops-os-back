@@ -1,5 +1,5 @@
 import type { AppSupabaseClient } from "../../types/supabase";
-import type { ListTasksQuery } from "./tasks.schema";
+import type { CreateTaskInput, ListTasksQuery } from "./tasks.schema";
 
 export async function getTasks(
   supabase: AppSupabaseClient,
@@ -67,4 +67,55 @@ export async function getTaskById(
     .eq("organization_id", organizationId)
     .eq("id", taskId)
     .maybeSingle();
+}
+
+/**
+ * Check whether an assignee belongs to the active organization.
+ */
+export async function getTaskAssignee(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  assigneeId: string,
+) {
+  return supabase
+    .from("organization_members")
+    .select("user_id")
+    .eq("organization_id", organizationId)
+    .eq("user_id", assigneeId)
+    .maybeSingle();
+}
+
+/**
+ * Check whether a lead belongs to the active organization.
+ */
+export async function getTaskLead(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  leadId: string,
+) {
+  return supabase
+    .from("leads")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("id", leadId)
+    .maybeSingle();
+}
+
+/**
+ * Insert a new task.
+ * The database automatically generates its ID, creator, and default status.
+ */
+export async function insertTask(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  input: CreateTaskInput,
+) {
+  return supabase
+    .from("tasks")
+    .insert({
+      organization_id: organizationId,
+      ...input,
+    })
+    .select("*")
+    .single();
 }
