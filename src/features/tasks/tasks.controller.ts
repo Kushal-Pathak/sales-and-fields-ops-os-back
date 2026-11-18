@@ -1,9 +1,10 @@
 import type { Context } from "hono";
 import type { AppEnv } from "../../types/app";
 import { validate } from "../../shared/validation/validate";
-import { listTasksQuerySchema } from "./tasks.schema";
-import { findTaskById, listTasks } from "./tasks.service";
+import { createTaskSchema, listTasksQuerySchema } from "./tasks.schema";
+import { createTask, findTaskById, listTasks } from "./tasks.service";
 import { validateUuid } from "../../shared/validation/validate-uuid";
+import { AppError } from "../../core/errors/app-error";
 
 export async function listTasksController(c: Context<AppEnv>) {
   const query = validate(listTasksQuerySchema, c.req.query());
@@ -32,4 +33,20 @@ export async function getTaskController(c: Context<AppEnv>) {
     taskId,
   );
   return c.json({ data });
+}
+
+export async function createTaskController(c: Context<AppEnv>) {
+  const body = await c.req.json().catch(() => {
+    throw new AppError("VALIDATION_ERROR", 400, "Invalid JSON request body");
+  });
+
+  const input = validate(createTaskSchema, body);
+
+  const data = await createTask(
+    c.get("supabase"),
+    c.get("organizationId"),
+    input,
+  );
+
+  return c.json({ data }, 201);
 }
