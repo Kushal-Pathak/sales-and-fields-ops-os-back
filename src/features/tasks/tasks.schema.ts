@@ -53,3 +53,18 @@ export const assignTaskSchema = z
   .strict();
 
 export type AssignTaskInput = z.infer<typeof assignTaskSchema>;
+
+export const updateTaskDetailsSchema = createTaskSchema
+  .pick({
+    title: true,
+    description: true,
+    priority: true,
+    due_at: true,
+    lead_id: true,
+  })
+  .partial()
+  .refine((data) => Object.values(data).some((value) => value !== undefined), {
+    message: "At least one task detail is required",
+  });
+
+export type UpdateTaskDetailsInput = z.infer<typeof updateTaskDetailsSchema>;

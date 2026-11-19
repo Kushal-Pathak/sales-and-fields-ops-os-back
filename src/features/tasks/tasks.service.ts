@@ -2,6 +2,7 @@ import { AppError } from "../../core/errors/app-error";
 import type { AppSupabaseClient } from "../../types/supabase";
 import {
   taskStatusSchema,
+  UpdateTaskDetailsInput,
   type CreateTaskInput,
   type ListTasksQuery,
   type UpdateTaskStatusInput,
@@ -14,6 +15,7 @@ import {
   getTaskLead,
   getTasks,
   insertTask,
+  updateTaskDetails,
   updateTaskStatus,
 } from "./tasks.repository";
 import { POSTGRES_ERROR_CODES } from "../../platform/database/postgres-errors";
@@ -283,6 +285,76 @@ export async function assignTaskToUser(
     }
 
     throw new AppError("TASK_ASSIGNMENT_FAILED", 500, "Failed to assign task");
+  }
+
+  if (!data) {
+    throw new AppError("TASK_NOT_FOUND", 404, "Task not found");
+  }
+
+  return data;
+}
+
+export async function editTaskDetails(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  taskId: string,
+  input: UpdateTaskDetailsInput,
+) {
+  // Validate a new linked lead within the active organization.
+  // NULL means the existing lead should be unlinked.
+  if (input.lead_id) {
+    const { data: lead, error: leadError } = await getTaskLead(
+      supabase,
+      organizationId,
+      input.lead_id,
+    );
+
+    if (leadError) {
+      throw new AppError("TASK_UPDATE_FAILED", 500, "Failed to update task");
+    }
+
+    if (!lead) {
+      throw new AppError(
+        "INVALID_LEAD",
+        400,
+        "Lead does not belong to this organization or does not exist",
+      );
+    }
+  }
+
+  const { data, error } = await updateTaskDetails(
+    supabase,
+    organizationId,
+    taskId,
+    input,
+  );
+
+  if (error) {
+    // A linked lead may have been deleted after validation.
+    if (
+      error.code === POSTGRES_ERROR_CODES.FOREIGN_KEY_VIOLATION &&
+      error.message.includes("tasks_organization_lead_fk")
+    ) {
+      throw new AppError(
+        "INVALID_LEAD",
+        409,
+        "Linked lead is no longer valid. Refresh and try again.",
+      );
+    }
+
+    // Also handle a database-level authorization rejection.
+    if (
+      error.code === "42501" &&
+      error.message.includes("Task details require organization admin")
+    ) {
+      throw new AppError(
+        "FORBIDDEN",
+        403,
+        "You do not have permission to update task details",
+      );
+    }
+
+    throw new AppError("TASK_UPDATE_FAILED", 500, "Failed to update task");
   }
 
   if (!data) {

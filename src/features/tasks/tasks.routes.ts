@@ -9,6 +9,7 @@ import {
   getTaskController,
   listTasksController,
   updateTaskController,
+  updateTaskDetailsController,
 } from "./tasks.controller";
 import { requireRole } from "../../middleware/require-role";
 
@@ -22,6 +23,7 @@ tasks.get("/:id", getTaskController);
 tasks.post("/", requireRole("admin"), createTaskController);
 tasks.patch("/:id", updateTaskController);
 tasks.patch("/:id/assign", requireRole("admin"), assignTaskController);
+tasks.patch("/:id/details", requireRole("admin"), updateTaskDetailsController);
 tasks.delete("/:id", requireRole("admin"), deleteTaskController);
 
 export default tasks;

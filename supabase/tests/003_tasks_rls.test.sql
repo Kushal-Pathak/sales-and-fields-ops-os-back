@@ -4,7 +4,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(52);
+SELECT plan(62);
 
 -- 1. Verify task security configuration.
 
@@ -321,11 +321,41 @@ SELECT ok(
 );
 
 SELECT ok(
-  NOT has_column_privilege(
+  has_column_privilege(
     'authenticated', 'public.tasks', 'title', 'UPDATE'
   ),
-  'Task title cannot be directly updated yet'
+  'Task title is updateable with admin-only trigger protection'
 );
+
+
+SELECT ok(
+  has_column_privilege(
+    'authenticated', 'public.tasks', 'description', 'UPDATE'
+  ),
+  'Task description column has UPDATE permission'
+);
+
+SELECT ok(
+  has_column_privilege(
+    'authenticated', 'public.tasks', 'priority', 'UPDATE'
+  ),
+  'Task priority column has UPDATE permission'
+);
+
+SELECT ok(
+  has_column_privilege(
+    'authenticated', 'public.tasks', 'due_at', 'UPDATE'
+  ),
+  'Task due date column has UPDATE permission'
+);
+
+SELECT ok(
+  has_column_privilege(
+    'authenticated', 'public.tasks', 'lead_id', 'UPDATE'
+  ),
+  'Task linked lead column has UPDATE permission'
+);
+
 
 -- Organization A admin.
 SET LOCAL request.jwt.claim.sub =
@@ -688,6 +718,88 @@ SELECT is(
   ),
   0::bigint,
   'Staff cannot see an unassigned task'
+);
+
+
+-- --------------------------------------------------
+-- 15. TASK DETAILS UPDATE PERMISSIONS
+-- --------------------------------------------------
+
+-- Staff A cannot change their assigned task's title.
+SET LOCAL request.jwt.claim.sub =
+  '72222222-2222-4222-8222-222222222222';
+
+SELECT throws_ok(
+  $sql$
+    UPDATE public.tasks
+    SET title = 'Unauthorized title'
+    WHERE id = '91111111-1111-4111-8111-111111111111'
+  $sql$,
+  '42501', NULL,
+  'Staff cannot directly change task title'
+);
+
+SELECT throws_ok(
+  $sql$
+    UPDATE public.tasks
+    SET priority = 'high'
+    WHERE id = '91111111-1111-4111-8111-111111111111'
+  $sql$,
+  '42501', NULL,
+  'Staff cannot directly change task priority'
+);
+
+SELECT throws_ok(
+  $sql$
+    UPDATE public.tasks
+    SET lead_id = NULL
+    WHERE id = '91111111-1111-4111-8111-111111111111'
+  $sql$,
+  '42501', NULL,
+  'Staff cannot directly unlink a task from a lead'
+);
+
+-- Admin A can update task details.
+SET LOCAL request.jwt.claim.sub =
+  '71111111-1111-4111-8111-111111111111';
+
+SELECT isnt_empty(
+  $sql$
+    UPDATE public.tasks
+    SET
+      title = 'Admin updated task',
+      description = 'Updated description',
+      priority = 'high',
+      due_at = '2026-12-15T10:00:00Z'::timestamptz,
+      lead_id = '81111111-1111-4111-8111-111111111111'
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+    RETURNING id
+  $sql$,
+  'Admin can update task details in their organization'
+);
+
+SELECT is(
+  (
+    SELECT title
+    FROM public.tasks
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+  ),
+  'Admin updated task',
+  'Admin task detail changes are persisted'
+);
+
+-- Admin B cannot update organization A's task.
+SET LOCAL request.jwt.claim.sub =
+  '74444444-4444-4444-8444-444444444444';
+
+SELECT is_empty(
+  $sql$
+    UPDATE public.tasks
+    SET title = 'Cross-organization edit'
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+    RETURNING id
+  $sql$,
+  'Admin cannot update another organization task'
 );
 
 
