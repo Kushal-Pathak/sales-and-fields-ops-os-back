@@ -7,6 +7,7 @@ import {
   type UpdateTaskStatusInput,
 } from "./tasks.schema";
 import {
+  deleteTask,
   getTaskAssignee,
   getTaskById,
   getTaskLead,
@@ -205,6 +206,24 @@ export async function editTaskStatus(
       409,
       "Task may have changed. Refresh and try again.",
     );
+  }
+
+  return data;
+}
+
+export async function removeTask(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  taskId: string,
+) {
+  const { data, error } = await deleteTask(supabase, organizationId, taskId);
+
+  if (error) {
+    throw new AppError("TASK_DELETE_FAILED", 500, "Failed to delete task");
+  }
+
+  if (!data) {
+    throw new AppError("TASK_NOT_FOUND", 404, "Task not found");
   }
 
   return data;

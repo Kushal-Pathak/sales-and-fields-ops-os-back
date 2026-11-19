@@ -11,6 +11,7 @@ import {
   editTaskStatus,
   findTaskById,
   listTasks,
+  removeTask,
 } from "./tasks.service";
 import { validateUuid } from "../../shared/validation/validate-uuid";
 import { AppError } from "../../core/errors/app-error";
@@ -73,6 +74,17 @@ export async function updateTaskController(c: Context<AppEnv>) {
   const organizationId = c.get("organizationId");
 
   const data = await editTaskStatus(supabase, organizationId, taskId, input);
+
+  return c.json({ data });
+}
+
+export async function deleteTaskController(c: Context<AppEnv>) {
+  const taskId = validateUuid(c.req.param("id"), "Task ID");
+
+  const supabase = c.get("supabase");
+  const organizationId = c.get("organizationId");
+
+  const data = await removeTask(supabase, organizationId, taskId);
 
   return c.json({ data });
 }
