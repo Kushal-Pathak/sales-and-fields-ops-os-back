@@ -68,6 +68,13 @@ VALUES
     'Follow up with customer'
   );
 
+-- Simulate Organization A admin for authorized database operations.
+SELECT set_config(
+  'request.jwt.claim.sub',
+  '71111111-aaaa-4111-8111-111111111111',
+  true
+);
+
 -- --------------------------------------------------
 -- 2. PROTECT TASK IDENTITY
 -- --------------------------------------------------

@@ -19,6 +19,30 @@ VALUES (
   'Task lifecycle verification'
 );
 
+-- Create an organization admin for authorized detail updates.
+INSERT INTO auth.users (id, email)
+VALUES (
+  '77770001-0000-4000-8000-000000000001',
+  'task-lifecycle-admin@example.test'
+);
+
+INSERT INTO public.organization_members (
+  organization_id,
+  user_id,
+  role
+)
+VALUES (
+  'aaaa0001-0000-4000-8000-000000000001',
+  '77770001-0000-4000-8000-000000000001',
+  'admin'
+);
+
+SELECT set_config(
+  'request.jwt.claim.sub',
+  '77770001-0000-4000-8000-000000000001',
+  true
+);
+
 -- --------------------------------------------------
 -- 1. NORMAL PROGRESS AND COMPLETION
 -- --------------------------------------------------

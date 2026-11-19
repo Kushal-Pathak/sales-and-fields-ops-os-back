@@ -5,11 +5,13 @@ import {
   assignTaskSchema,
   createTaskSchema,
   listTasksQuerySchema,
+  updateTaskDetailsSchema,
   updateTaskStatusSchema,
 } from "./tasks.schema";
 import {
   assignTaskToUser,
   createTask,
+  editTaskDetails,
   editTaskStatus,
   findTaskById,
   listTasks,
@@ -109,6 +111,23 @@ export async function assignTaskController(c: Context<AppEnv>) {
     taskId,
     input.assigned_to,
   );
+
+  return c.json({ data });
+}
+
+export async function updateTaskDetailsController(c: Context<AppEnv>) {
+  const taskId = validateUuid(c.req.param("id"), "Task ID");
+
+  const body = await c.req.json().catch(() => {
+    throw new AppError("VALIDATION_ERROR", 400, "Invalid JSON request body");
+  });
+
+  const input = validate(updateTaskDetailsSchema, body);
+
+  const supabase = c.get("supabase");
+  const organizationId = c.get("organizationId");
+
+  const data = await editTaskDetails(supabase, organizationId, taskId, input);
 
   return c.json({ data });
 }

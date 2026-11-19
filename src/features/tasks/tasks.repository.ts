@@ -3,6 +3,7 @@ import type {
   CreateTaskInput,
   ListTasksQuery,
   TaskStatus,
+  UpdateTaskDetailsInput,
 } from "./tasks.schema";
 
 export async function getTasks(
@@ -167,6 +168,21 @@ export async function assignTask(
   return supabase
     .from("tasks")
     .update({ assigned_to: assignedTo })
+    .eq("organization_id", organizationId)
+    .eq("id", taskId)
+    .select()
+    .maybeSingle();
+}
+
+export async function updateTaskDetails(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  taskId: string,
+  input: UpdateTaskDetailsInput,
+) {
+  return supabase
+    .from("tasks")
+    .update(input)
     .eq("organization_id", organizationId)
     .eq("id", taskId)
     .select()
