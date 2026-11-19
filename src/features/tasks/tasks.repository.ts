@@ -1,5 +1,9 @@
 import type { AppSupabaseClient } from "../../types/supabase";
-import type { CreateTaskInput, ListTasksQuery, TaskStatus } from "./tasks.schema";
+import type {
+  CreateTaskInput,
+  ListTasksQuery,
+  TaskStatus,
+} from "./tasks.schema";
 
 export async function getTasks(
   supabase: AppSupabaseClient,
@@ -136,6 +140,20 @@ export async function updateTaskStatus(
     .eq("organization_id", organizationId)
     .eq("id", taskId)
     .eq("status", expectedStatus)
+    .select()
+    .maybeSingle();
+}
+
+export async function deleteTask(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  taskId: string,
+) {
+  return supabase
+    .from("tasks")
+    .delete()
+    .eq("organization_id", organizationId)
+    .eq("id", taskId)
     .select()
     .maybeSingle();
 }

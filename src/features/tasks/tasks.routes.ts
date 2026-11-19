@@ -4,6 +4,7 @@ import { requireAuth } from "../../middleware/auth";
 import { requireOrganizationAccess } from "../../middleware/organization-access";
 import {
   createTaskController,
+  deleteTaskController,
   getTaskController,
   listTasksController,
   updateTaskController,
@@ -19,5 +20,6 @@ tasks.get("/", listTasksController);
 tasks.get("/:id", getTaskController);
 tasks.post("/", requireRole("admin"), createTaskController);
 tasks.patch("/:id", updateTaskController);
+tasks.delete("/:id", requireRole("admin"), deleteTaskController);
 
 export default tasks;
