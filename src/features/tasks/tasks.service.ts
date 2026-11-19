@@ -7,6 +7,7 @@ import {
   type UpdateTaskStatusInput,
 } from "./tasks.schema";
 import {
+  assignTask,
   deleteTask,
   getTaskAssignee,
   getTaskById,
@@ -220,6 +221,68 @@ export async function removeTask(
 
   if (error) {
     throw new AppError("TASK_DELETE_FAILED", 500, "Failed to delete task");
+  }
+
+  if (!data) {
+    throw new AppError("TASK_NOT_FOUND", 404, "Task not found");
+  }
+
+  return data;
+}
+
+export async function assignTaskToUser(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  taskId: string,
+  assignedTo: string | null,
+) {
+  // Ensure the assignee belongs to the active organization.
+  if (assignedTo !== null) {
+    const { data: member, error: memberError } = await getTaskAssignee(
+      supabase,
+      organizationId,
+      assignedTo,
+    );
+
+    if (memberError) {
+      throw new AppError(
+        "TASK_ASSIGNMENT_FAILED",
+        500,
+        "Failed to assign task",
+      );
+    }
+
+    if (!member) {
+      throw new AppError(
+        "INVALID_ASSIGNEE",
+        400,
+        "Assigned user does not belong to this organization",
+      );
+    }
+  }
+
+  const { data, error } = await assignTask(
+    supabase,
+    organizationId,
+    taskId,
+    assignedTo,
+  );
+
+  if (error) {
+    // Membership might have changed between validation and updating.
+    if (
+      assignedTo !== null &&
+      error.code === POSTGRES_ERROR_CODES.FOREIGN_KEY_VIOLATION &&
+      error.message.includes("tasks_assignee_membership_fk")
+    ) {
+      throw new AppError(
+        "INVALID_ASSIGNEE",
+        409,
+        "The selected assignee is no longer valid. Refresh and try again.",
+      );
+    }
+
+    throw new AppError("TASK_ASSIGNMENT_FAILED", 500, "Failed to assign task");
   }
 
   if (!data) {

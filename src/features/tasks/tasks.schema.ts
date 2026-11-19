@@ -45,3 +45,11 @@ export const updateTaskStatusSchema = z
 export type UpdateTaskStatusInput = z.infer<typeof updateTaskStatusSchema>;
 
 export type TaskStatus = z.infer<typeof taskStatusSchema>;
+
+export const assignTaskSchema = z
+  .object({
+    assigned_to: z.uuid().nullable(),
+  })
+  .strict();
+
+export type AssignTaskInput = z.infer<typeof assignTaskSchema>;

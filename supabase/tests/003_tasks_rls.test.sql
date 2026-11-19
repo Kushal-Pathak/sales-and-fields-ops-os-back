@@ -4,7 +4,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(45);
+SELECT plan(52);
 
 -- 1. Verify task security configuration.
 
@@ -307,10 +307,10 @@ SELECT ok(
 );
 
 SELECT ok(
-  NOT has_column_privilege(
+  has_column_privilege(
     'authenticated', 'public.tasks', 'assigned_to', 'UPDATE'
   ),
-  'Users cannot directly change task assignments'
+  'Assignment column is updateable with RLS restrictions'
 );
 
 SELECT ok(
@@ -589,6 +589,107 @@ SELECT is(
   1::bigint,
   'Assigned task remains accessible after lead reassignment'
 );
+
+
+-- --------------------------------------------------
+-- 14. TEST TASK ASSIGNMENT PERMISSIONS
+-- --------------------------------------------------
+
+-- Staff A cannot unassign their existing task.
+SET LOCAL request.jwt.claim.sub =
+  '72222222-2222-4222-8222-222222222222';
+
+SELECT throws_ok(
+  $sql$
+    UPDATE public.tasks
+    SET assigned_to = NULL
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+  $sql$,
+  '42501', NULL,
+  'Staff cannot unassign their own task'
+);
+
+-- Organization A admin can reassign Staff A's task to Staff B.
+SET LOCAL request.jwt.claim.sub =
+  '71111111-1111-4111-8111-111111111111';
+
+SELECT isnt_empty(
+  $sql$
+    UPDATE public.tasks
+    SET assigned_to =
+      '73333333-3333-4333-8333-333333333333'
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+    RETURNING id
+  $sql$,
+  'Admin can reassign a task to another organization member'
+);
+
+SELECT is(
+  (
+    SELECT assigned_to
+    FROM public.tasks
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+  ),
+  '73333333-3333-4333-8333-333333333333'::uuid,
+  'Task records the new assignee'
+);
+
+-- The previous assignee loses visibility.
+SET LOCAL request.jwt.claim.sub =
+  '72222222-2222-4222-8222-222222222222';
+
+SELECT is(
+  (
+    SELECT COUNT(*)
+    FROM public.tasks
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+  ),
+  0::bigint,
+  'Previous assignee can no longer view the task'
+);
+
+-- The new assignee gains visibility.
+SET LOCAL request.jwt.claim.sub =
+  '73333333-3333-4333-8333-333333333333';
+
+SELECT is(
+  (
+    SELECT COUNT(*)
+    FROM public.tasks
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+  ),
+  1::bigint,
+  'New assignee can view the task'
+);
+
+-- Admin can unassign the task.
+SET LOCAL request.jwt.claim.sub =
+  '71111111-1111-4111-8111-111111111111';
+
+SELECT isnt_empty(
+  $sql$
+    UPDATE public.tasks
+    SET assigned_to = NULL
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+    RETURNING id
+  $sql$,
+  'Admin can unassign a task'
+);
+
+-- Once unassigned, Staff B also loses visibility.
+SET LOCAL request.jwt.claim.sub =
+  '73333333-3333-4333-8333-333333333333';
+
+SELECT is(
+  (
+    SELECT COUNT(*)
+    FROM public.tasks
+    WHERE id = '93333333-3333-4333-8333-333333333333'
+  ),
+  0::bigint,
+  'Staff cannot see an unassigned task'
+);
+
 
 SELECT * FROM finish();
 
