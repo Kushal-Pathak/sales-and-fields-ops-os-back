@@ -157,3 +157,18 @@ export async function deleteTask(
     .select()
     .maybeSingle();
 }
+
+export async function assignTask(
+  supabase: AppSupabaseClient,
+  organizationId: string,
+  taskId: string,
+  assignedTo: string | null,
+) {
+  return supabase
+    .from("tasks")
+    .update({ assigned_to: assignedTo })
+    .eq("organization_id", organizationId)
+    .eq("id", taskId)
+    .select()
+    .maybeSingle();
+}

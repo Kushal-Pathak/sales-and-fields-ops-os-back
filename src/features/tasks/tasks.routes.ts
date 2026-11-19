@@ -3,6 +3,7 @@ import type { AppEnv } from "../../types/app";
 import { requireAuth } from "../../middleware/auth";
 import { requireOrganizationAccess } from "../../middleware/organization-access";
 import {
+  assignTaskController,
   createTaskController,
   deleteTaskController,
   getTaskController,
@@ -20,6 +21,7 @@ tasks.get("/", listTasksController);
 tasks.get("/:id", getTaskController);
 tasks.post("/", requireRole("admin"), createTaskController);
 tasks.patch("/:id", updateTaskController);
+tasks.patch("/:id/assign", requireRole("admin"), assignTaskController);
 tasks.delete("/:id", requireRole("admin"), deleteTaskController);
 
 export default tasks;

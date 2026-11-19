@@ -2,11 +2,13 @@ import type { Context } from "hono";
 import type { AppEnv } from "../../types/app";
 import { validate } from "../../shared/validation/validate";
 import {
+  assignTaskSchema,
   createTaskSchema,
   listTasksQuerySchema,
   updateTaskStatusSchema,
 } from "./tasks.schema";
 import {
+  assignTaskToUser,
   createTask,
   editTaskStatus,
   findTaskById,
@@ -85,6 +87,28 @@ export async function deleteTaskController(c: Context<AppEnv>) {
   const organizationId = c.get("organizationId");
 
   const data = await removeTask(supabase, organizationId, taskId);
+
+  return c.json({ data });
+}
+
+export async function assignTaskController(c: Context<AppEnv>) {
+  const taskId = validateUuid(c.req.param("id"), "Task ID");
+
+  const body = await c.req.json().catch(() => {
+    throw new AppError("VALIDATION_ERROR", 400, "Invalid JSON request body");
+  });
+
+  const input = validate(assignTaskSchema, body);
+
+  const supabase = c.get("supabase");
+  const organizationId = c.get("organizationId");
+
+  const data = await assignTaskToUser(
+    supabase,
+    organizationId,
+    taskId,
+    input.assigned_to,
+  );
 
   return c.json({ data });
 }
