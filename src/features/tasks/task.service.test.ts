@@ -95,6 +95,54 @@ describe("Task Service - listTasks", () => {
 });
 
 describe("Task listing query validation", () => {
+  it("accepts advanced task filters", () => {
+    const assignedTo = "11111111-1111-4111-8111-111111111111";
+    const leadId = "22222222-2222-4222-8222-222222222222";
+
+    expect(
+      listTasksQuerySchema.parse({
+        assignedTo,
+        leadId,
+        search: "  Follow Up  ",
+        overdue: "true",
+        dueAfter: "2026-11-01T00:00:00Z",
+        dueBefore: "2026-12-01T00:00:00Z",
+      }),
+    ).toMatchObject({
+      assignedTo,
+      leadId,
+      search: "Follow Up",
+      overdue: "true",
+      dueAfter: "2026-11-01T00:00:00Z",
+      dueBefore: "2026-12-01T00:00:00Z",
+    });
+  });
+
+  it("accepts the unassigned task filter", () => {
+    expect(
+      listTasksQuerySchema.parse({
+        assignedTo: "unassigned",
+      }).assignedTo,
+    ).toBe("unassigned");
+  });
+
+  it.each([
+    { assignedTo: "invalid-id" },
+    { leadId: "invalid-id" },
+    { search: "" },
+    { search: "   " },
+    { search: "x".repeat(101) },
+    { overdue: "yes" },
+    { dueAfter: "tomorrow" },
+    { dueBefore: "next-week" },
+    {
+      dueAfter: "2026-12-10T00:00:00Z",
+      dueBefore: "2026-12-01T00:00:00Z",
+    },
+  ])("rejects invalid advanced filters: %j", (input) => {
+    expect(listTasksQuerySchema.safeParse(input).success).toBe(false);
+  });
+
   it("uses predictable defaults", () => {
     expect(listTasksQuerySchema.parse({})).toEqual({
       page: 1,

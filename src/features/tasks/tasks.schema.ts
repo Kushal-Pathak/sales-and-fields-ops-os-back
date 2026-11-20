@@ -9,13 +9,37 @@ export const taskStatusSchema = z.enum([
 
 export const taskPrioritySchema = z.enum(["low", "medium", "high"]);
 
-export const listTasksQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  status: taskStatusSchema.optional(),
-  priority: taskPrioritySchema.optional(),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
-});
+export const listTasksQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+
+    status: taskStatusSchema.optional(),
+    priority: taskPrioritySchema.optional(),
+
+    assignedTo: z.union([z.uuid(), z.literal("unassigned")]).optional(),
+
+    leadId: z.uuid().optional(),
+
+    search: z.string().trim().min(1).max(100).optional(),
+
+    dueBefore: z.iso.datetime({ offset: true }).optional(),
+    dueAfter: z.iso.datetime({ offset: true }).optional(),
+
+    overdue: z.enum(["true", "false"]).optional(),
+
+    sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  })
+  .refine(
+    (query) =>
+      !query.dueBefore ||
+      !query.dueAfter ||
+      Date.parse(query.dueAfter) <= Date.parse(query.dueBefore),
+    {
+      message: "dueAfter must be earlier than or equal to dueBefore",
+      path: ["dueAfter"],
+    },
+  );
 
 export type ListTasksQuery = z.infer<typeof listTasksQuerySchema>;
 
