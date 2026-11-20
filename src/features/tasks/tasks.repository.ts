@@ -14,6 +14,14 @@ export async function getTasks(
   const from = (query.page - 1) * query.limit;
   const to = from + query.limit - 1;
 
+  // Use the same cutoff for counting and fetching overdue tasks.
+  const overdueCutoff =
+    query.overdue === "true" ? new Date().toISOString() : null;
+
+  // --------------------------------------------------
+  // 1. COUNT MATCHING TASKS
+  // --------------------------------------------------
+
   let countQuery = supabase
     .from("tasks")
     .select("*", { count: "exact", head: true })
@@ -27,6 +35,34 @@ export async function getTasks(
     countQuery = countQuery.eq("priority", query.priority);
   }
 
+  if (query.assignedTo === "unassigned") {
+    countQuery = countQuery.is("assigned_to", null);
+  } else if (query.assignedTo) {
+    countQuery = countQuery.eq("assigned_to", query.assignedTo);
+  }
+
+  if (query.leadId) {
+    countQuery = countQuery.eq("lead_id", query.leadId);
+  }
+
+  if (query.search) {
+    countQuery = countQuery.ilike("title", `%${query.search}%`);
+  }
+
+  if (query.dueAfter) {
+    countQuery = countQuery.gte("due_at", query.dueAfter);
+  }
+
+  if (query.dueBefore) {
+    countQuery = countQuery.lte("due_at", query.dueBefore);
+  }
+
+  if (overdueCutoff) {
+    countQuery = countQuery
+      .lt("due_at", overdueCutoff)
+      .in("status", ["todo", "in_progress"]);
+  }
+
   const { count, error: countError } = await countQuery;
 
   if (countError || count === null) {
@@ -36,6 +72,10 @@ export async function getTasks(
   if (from >= count) {
     return { data: [], count, error: null };
   }
+
+  // --------------------------------------------------
+  // 2. FETCH MATCHING TASKS
+  // --------------------------------------------------
 
   let dataQuery = supabase
     .from("tasks")
@@ -50,9 +90,41 @@ export async function getTasks(
     dataQuery = dataQuery.eq("priority", query.priority);
   }
 
+  if (query.assignedTo === "unassigned") {
+    dataQuery = dataQuery.is("assigned_to", null);
+  } else if (query.assignedTo) {
+    dataQuery = dataQuery.eq("assigned_to", query.assignedTo);
+  }
+
+  if (query.leadId) {
+    dataQuery = dataQuery.eq("lead_id", query.leadId);
+  }
+
+  if (query.search) {
+    dataQuery = dataQuery.ilike("title", `%${query.search}%`);
+  }
+
+  if (query.dueAfter) {
+    dataQuery = dataQuery.gte("due_at", query.dueAfter);
+  }
+
+  if (query.dueBefore) {
+    dataQuery = dataQuery.lte("due_at", query.dueBefore);
+  }
+
+  if (overdueCutoff) {
+    dataQuery = dataQuery
+      .lt("due_at", overdueCutoff)
+      .in("status", ["todo", "in_progress"]);
+  }
+
   const { data, error } = await dataQuery
-    .order("created_at", { ascending: query.sortOrder === "asc" })
-    .order("id", { ascending: query.sortOrder === "asc" })
+    .order("created_at", {
+      ascending: query.sortOrder === "asc",
+    })
+    .order("id", {
+      ascending: query.sortOrder === "asc",
+    })
     .range(from, to);
 
   return { data, count, error };
