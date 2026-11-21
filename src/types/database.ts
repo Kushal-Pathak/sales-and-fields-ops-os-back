@@ -1,4 +1,3 @@
-
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -104,6 +103,26 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"task_notes": {
+                  Row: {
+                    "author_user_id": string | null,"content": string,"created_at": string,"id": string,"task_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_user_id"?: string | null,"content": string,"created_at"?: string,"id"?: string,"task_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "author_user_id"?: string | null,"content"?: string,"created_at"?: string,"id"?: string,"task_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "task_notes_task_id_fkey"
+      columns: ["task_id"]
+isOneToOne: false
+      referencedRelation: "tasks"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"tasks": {
                   Row: {

@@ -67,6 +67,9 @@ docker cp supabase/tests/004_tasks_integrity.test.sql \
 docker cp supabase/tests/005_tasks_lifecycle.test.sql \
   "$container:/tmp/005_tasks_lifecycle.test.sql"
 
+docker cp supabase/tests/006_task_notes_rls.test.sql \
+  "$container:/tmp/006_task_notes_rls.test.sql"
+
 echo "Running database tests..."
 
 docker exec \
@@ -81,4 +84,5 @@ docker exec \
     /tmp/002_crm_constraints.test.sql \
     /tmp/003_tasks_rls.test.sql \
     /tmp/004_tasks_integrity.test.sql \
-    /tmp/005_tasks_lifecycle.test.sql
+    /tmp/005_tasks_lifecycle.test.sql \
+    /tmp/006_task_notes_rls.test.sql
