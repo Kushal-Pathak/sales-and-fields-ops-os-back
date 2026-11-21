@@ -12,6 +12,12 @@ import {
   updateTaskDetailsController,
 } from "./tasks.controller";
 import { requireRole } from "../../middleware/require-role";
+import {
+  createTaskNoteController,
+  deleteTaskNoteController,
+  listTaskNotesController,
+  updateTaskNoteController,
+} from "./task-notes.controller";
 
 const tasks = new Hono<AppEnv>();
 
@@ -25,5 +31,10 @@ tasks.patch("/:id", updateTaskController);
 tasks.patch("/:id/assign", requireRole("admin"), assignTaskController);
 tasks.patch("/:id/details", requireRole("admin"), updateTaskDetailsController);
 tasks.delete("/:id", requireRole("admin"), deleteTaskController);
+
+tasks.get("/:id/notes", listTaskNotesController);
+tasks.post("/:id/notes", createTaskNoteController);
+tasks.patch("/:id/notes/:noteId", updateTaskNoteController);
+tasks.delete("/:id/notes/:noteId", deleteTaskNoteController);
 
 export default tasks;
